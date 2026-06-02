@@ -65,7 +65,6 @@
 - [`期末報告/專案總覽.md`](./期末報告/專案總覽.md)：可逐層點選所有文件與實體說明之專案入口。
 - [`期末報告/Schema_設計說明.md`](./期末報告/Schema_設計說明.md)：SQL Schema 方法、依據與範例。
 - [`期末報告/schema.sql`](./期末報告/schema.sql)：正式 MariaDB 建表語法。
-- [`期末報告/專案詳細說明.txt`](./期末報告/專案詳細說明.txt)：完整文字版專案說明。
 - [`期末報告/ER_Diagram_Detailed.drawio`](./期末報告/ER_Diagram_Detailed.drawio)：可於 diagrams.net 編輯之詳細 ER 圖。
 
 [`期中報告/create_db.sql`](./期中報告/create_db.sql) 保留為初期版本。

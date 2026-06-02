@@ -142,4 +142,3 @@ erDiagram
 | 唯一鍵 | `users.email`、`sections.section_name` 與 `booking_statuses.status_code` 使用唯一鍵，避免重複資料。 |
 | 可選關聯 | `bookings.long_term_id`、`bookings.course_time_id` 與 `notifications.booking_id` 允許為空值，因此其父實體關聯以 `o|` 表示。 |
 | 衝突驗證 | Mermaid 圖呈現資料結構；固定課表與預約時段之衝突驗證由 `Part2_schema.sql` 內的觸發器執行。 |
-

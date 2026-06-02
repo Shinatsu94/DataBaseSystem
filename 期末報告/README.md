@@ -2,6 +2,8 @@
 
 本目錄為教室租用系統之完整資料庫設計報告。內容依一般 GitHub 專案文件慣例，整合系統需求、實體關聯圖、Schema 架構、完整性限制、SQL 範例、測試結果與可編輯附件，不再依作業階段分割。
 
+完整文件入口位於 [`專案總覽.md`](./專案總覽.md)，可逐層點選各項設計文件與 10 份實體說明。
+
 ## 目錄
 
 - [實體關聯圖](#實體關聯圖)
@@ -107,7 +109,7 @@ flowchart LR
 
 ## 資料庫設計摘要
 
-本系統使用 SQLite 3，Schema 共包含 10 個資料表：
+本系統使用 MariaDB，資料表採用 `InnoDB` 儲存引擎與 `utf8mb4` 字元集。Schema 共包含 10 個資料表：
 
 | 資料表 | 用途 |
 |---|---|
@@ -124,7 +126,7 @@ flowchart LR
 
 完整 SQL Schema 與設計依據：
 
-- [`schema.sql`](./schema.sql)：可執行之 SQLite 建表語法。
+- [`schema.sql`](./schema.sql)：可執行之 MariaDB 建表語法。
 - [`Schema_設計說明.md`](./Schema_設計說明.md)：設計方法、架構依據、限制條件、觸發器、索引與 SQL 範例。
 
 ## 完整性限制
@@ -141,15 +143,12 @@ flowchart LR
 進入本目錄後，依序執行：
 
 ```powershell
-sqlite3 classroom_rental.db ".read schema.sql"
-sqlite3 classroom_rental.db ".read examples.sql"
+mariadb -u root -p -e "CREATE DATABASE IF NOT EXISTS classroom_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb -u root -p classroom_rental < schema.sql
+mariadb -u root -p classroom_rental < examples.sql
 ```
 
-SQLite 每次建立連線時皆須啟用外鍵：
-
-```sql
-PRAGMA foreign_keys = ON;
-```
+`schema.sql` 內的資料表均明確指定 `ENGINE=InnoDB`。MariaDB 會在資料異動時檢查外鍵參照完整性。
 
 ## 驗證摘要
 
@@ -169,6 +168,7 @@ PRAGMA foreign_keys = ON;
 
 | 文件 | 用途 |
 |---|---|
+| [`專案總覽.md`](./專案總覽.md) | 提供完整專案介紹與可點選之文件、SQL、ER 圖及實體導覽。 |
 | [`專案詳細說明.txt`](./專案詳細說明.txt) | 彙整專案目標、需求、資料庫方法、完整性限制、各實體、關聯、觸發器、索引、驗證與擴充項目。 |
 | [`Schema_設計說明.md`](./Schema_設計說明.md) | 獨立說明 SQL Schema 架構、方法、依據與實際範例。 |
 | [`schema.sql`](./schema.sql) | 建立資料表、外鍵、檢查限制、索引與觸發器。 |
@@ -178,4 +178,4 @@ PRAGMA foreign_keys = ON;
 | [`ER_Diagram_Detailed.md`](./ER_Diagram_Detailed.md) | 列出完整欄位、鍵值與關聯基數之詳細 Mermaid 關聯圖。 |
 | [`ER_Diagram_Detailed.drawio`](./ER_Diagram_Detailed.drawio) | 可於 diagrams.net 開啟與編輯之詳細 ER 圖。 |
 | [`實體資料表格`](./實體資料表格/README.md) | 10 個實體之獨立說明文件索引。 |
-| [`教室租用系統資料庫設計簡報.pptx`](./教室租用系統資料庫設計簡報.pptx) | 可供課堂報告使用之簡報檔案。 |
+| [`教室租用系統資料庫設計簡報.pptx`](./教室租用系統資料庫設計簡報.pptx) | 保留原始版本之課堂簡報；本次 MariaDB 遷移不修改此檔案。 |

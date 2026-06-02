@@ -1,8 +1,8 @@
 教室租用系統：專案與資料庫 Schema 詳細說明
 ============================================================
 
-文件版本：2.0
-適用資料庫：SQLite 3
+文件版本：3.0
+適用資料庫：MariaDB
 文件定位：
 本文件為教室租用系統資料庫專案之完整文字版說明。內容整合系統
 目標、需求、資料庫方法、設計依據、各實體、完整性限制、關聯、
@@ -17,22 +17,25 @@
    - 用途：獨立說明 SQL Schema 架構。
    - 內容：設計方法、正規化依據、完整性限制、觸發器、索引與範例。
 
-3. schema.sql
-   - 用途：建立正式 SQLite 資料庫。
+3. 專案總覽.md
+   - 用途：提供可逐層點選所有文件與實體說明之 Markdown 導覽入口。
+
+4. schema.sql
+   - 用途：建立正式 MariaDB 資料庫。
    - 內容：10 張資料表、外鍵、CHECK、索引與防止時段衝突之觸發器。
 
-4. examples.sql
+5. examples.sql
    - 用途：建立示範資料並執行查詢。
    - 內容：狀態、使用者、教室、節次、課程、預約、審核、通知與
      可取消註解之衝突測試。
 
-5. 驗證說明.md
+6. 驗證說明.md
    - 用途：整理已完成之正確資料與錯誤資料驗證結果。
 
-6. ER_Diagram.md
+7. ER_Diagram.md
    - 用途：提供 GitHub 首頁與簡報使用之精簡 Mermaid 關聯圖。
 
-7. ER_Diagram_Detailed.md
+8. ER_Diagram_Detailed.md
    - 用途：提供完整欄位、鍵值與關聯基數之詳細 Mermaid 關聯圖。
 
 8. ER_Diagram_Detailed.drawio
@@ -146,9 +149,8 @@ NULL，也不可重複。
 5.2 參照完整性（Referential Integrity）
 
 外鍵只能引用已存在的資料。例如 bookings.classroom_id 必須引用
-classrooms 資料表中已存在的教室。SQLite 執行時必須啟用：
-
-PRAGMA foreign_keys = ON;
+classrooms 資料表中已存在的教室。正式 Schema 的所有資料表均使用
+MariaDB InnoDB 儲存引擎，由資料庫執行外鍵參照完整性檢查。
 5.3 域完整性（Domain Integrity）
 
 欄位必須符合允許的資料型態、格式或值域。例如：
@@ -227,12 +229,12 @@ PRAGMA foreign_keys = ON;
    - 意義：教室名稱，例如一般教室、電腦教室。
    - 限制：NOT NULL。
 
-3. capacity INTEGER
+3. capacity INT
    - 意義：教室可容納人數。
    - 限制：NOT NULL、CHECK (capacity > 0)。
    - 完整性：容量必須為正整數。
 
-4. is_active INTEGER
+4. is_active TINYINT(1)
    - 意義：教室是否可用。
    - 限制：NOT NULL、DEFAULT 1、CHECK (is_active IN (0, 1))。
    - 允許值：1 表示啟用，0 表示停用。
@@ -250,7 +252,7 @@ PRAGMA foreign_keys = ON;
 時間文字。
 
 欄位：
-1. section_id INTEGER
+1. section_id INT
    - 意義：節次唯一編號。
    - 限制：PRIMARY KEY。
 
@@ -258,12 +260,12 @@ PRAGMA foreign_keys = ON;
    - 意義：節次顯示名稱，例如第 1 節。
    - 限制：NOT NULL、UNIQUE。
 
-3. start_time CHAR(5)
-   - 意義：開始時間，例如 08:10。
+3. start_time TIME
+   - 意義：開始時間，例如 08:10:00。
    - 限制：NOT NULL。
 
-4. end_time CHAR(5)
-   - 意義：結束時間，例如 09:00。
+4. end_time TIME
+   - 意義：結束時間，例如 09:00:00。
    - 限制：NOT NULL。
 
 資料表層級限制：
@@ -284,7 +286,7 @@ CHECK (start_time < end_time)
 集中保存預約狀態，避免在不同交易資料表中重複輸入狀態文字。
 
 欄位：
-1. status_id INTEGER
+1. status_id INT
    - 意義：狀態唯一編號。
    - 限制：PRIMARY KEY。
 
@@ -317,11 +319,11 @@ CHECK (start_time < end_time)
    - 意義：課程唯一編號。
    - 限制：PRIMARY KEY。
 
-2. academic_year INTEGER
+2. academic_year INT
    - 意義：學年度，例如 114。
    - 限制：NOT NULL。
 
-3. semester INTEGER
+3. semester INT
    - 意義：學期。
    - 限制：NOT NULL、CHECK (semester IN (1, 2))。
    - 允許值：1 表示上學期，2 表示下學期。
@@ -352,9 +354,9 @@ CHECK (start_time < end_time)
 保存課程固定排課資訊，包括課程、教室、星期與節次範圍。
 
 欄位：
-1. course_time_id INTEGER
+1. course_time_id INT
    - 意義：固定排課紀錄編號。
-   - 限制：PRIMARY KEY、AUTOINCREMENT。
+   - 限制：PRIMARY KEY、AUTO_INCREMENT。
 
 2. course_id VARCHAR(20)
    - 意義：對應課程。
@@ -366,17 +368,17 @@ CHECK (start_time < end_time)
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：classrooms(classroom_id)。
 
-4. day_of_week INTEGER
+4. day_of_week INT
    - 意義：星期。
    - 限制：NOT NULL、CHECK (day_of_week BETWEEN 1 AND 7)。
    - 約定：1 表示星期一，7 表示星期日。
 
-5. start_section_id INTEGER
+5. start_section_id INT
    - 意義：開始節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
 
-6. end_section_id INTEGER
+6. end_section_id INT
    - 意義：結束節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
@@ -403,9 +405,9 @@ Trigger 限制：
 固定使用某間教室。
 
 欄位：
-1. long_term_id INTEGER
+1. long_term_id INT
    - 意義：長期借用唯一編號。
-   - 限制：PRIMARY KEY、AUTOINCREMENT。
+   - 限制：PRIMARY KEY、AUTO_INCREMENT。
 
 2. applicant_id CHAR(8)
    - 意義：申請人。
@@ -425,16 +427,16 @@ Trigger 限制：
    - 意義：計畫結束日期。
    - 限制：NOT NULL。
 
-6. day_of_week INTEGER
+6. day_of_week INT
    - 意義：每週借用的星期。
    - 限制：NOT NULL、CHECK (day_of_week BETWEEN 1 AND 7)。
 
-7. start_section_id INTEGER
+7. start_section_id INT
    - 意義：開始節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
 
-8. end_section_id INTEGER
+8. end_section_id INT
    - 意義：結束節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
@@ -443,7 +445,7 @@ Trigger 限制：
    - 意義：長期借用原因。
    - 限制：NOT NULL。
 
-10. status_id INTEGER
+10. status_id INT
     - 意義：審核狀態。
     - 限制：NOT NULL、FOREIGN KEY。
     - 參照：booking_statuses(status_id)。
@@ -475,9 +477,9 @@ bookings。
 保存每一次實際發生的教室借用。此資料表是整個系統的營運核心。
 
 欄位：
-1. booking_id INTEGER
+1. booking_id INT
    - 意義：單次預約唯一編號。
-   - 限制：PRIMARY KEY、AUTOINCREMENT。
+   - 限制：PRIMARY KEY、AUTO_INCREMENT。
 
 2. applicant_id CHAR(8)
    - 意義：申請人。
@@ -489,13 +491,13 @@ bookings。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：classrooms(classroom_id)。
 
-4. long_term_id INTEGER
+4. long_term_id INT
    - 意義：若此紀錄由長期借用展開，保存父單據編號。
    - 限制：允許為 NULL、FOREIGN KEY。
    - 參照：long_term_bookings(long_term_id)。
    - 說明：臨時借用無須填寫。
 
-5. course_time_id INTEGER
+5. course_time_id INT
    - 意義：若此紀錄與固定課表相關，保存授課時間編號。
    - 限制：允許為 NULL、FOREIGN KEY。
    - 參照：course_times(course_time_id)。
@@ -505,12 +507,12 @@ bookings。
    - 意義：實際借用日期。
    - 限制：NOT NULL。
 
-7. start_section_id INTEGER
+7. start_section_id INT
    - 意義：開始節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
 
-8. end_section_id INTEGER
+8. end_section_id INT
    - 意義：結束節次。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：sections(section_id)。
@@ -519,7 +521,7 @@ bookings。
    - 意義：借用原因。
    - 限制：NOT NULL。
 
-10. status_id INTEGER
+10. status_id INT
     - 意義：目前審核狀態。
     - 限制：NOT NULL、FOREIGN KEY。
     - 參照：booking_statuses(status_id)。
@@ -562,11 +564,11 @@ Trigger 限制：
 歷史。
 
 欄位：
-1. review_id INTEGER
+1. review_id INT
    - 意義：審核紀錄唯一編號。
-   - 限制：PRIMARY KEY、AUTOINCREMENT。
+   - 限制：PRIMARY KEY、AUTO_INCREMENT。
 
-2. booking_id INTEGER
+2. booking_id INT
    - 意義：被審核的預約。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：bookings(booking_id)。
@@ -576,7 +578,7 @@ Trigger 限制：
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：users(user_id)。
 
-4. status_id INTEGER
+4. status_id INT
    - 意義：此次審核決定的狀態。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：booking_statuses(status_id)。
@@ -608,16 +610,16 @@ Trigger 限制：
 保存預約狀態通知與讀取狀態。
 
 欄位：
-1. notification_id INTEGER
+1. notification_id INT
    - 意義：通知唯一編號。
-   - 限制：PRIMARY KEY、AUTOINCREMENT。
+   - 限制：PRIMARY KEY、AUTO_INCREMENT。
 
 2. recipient_id CHAR(8)
    - 意義：通知收件者。
    - 限制：NOT NULL、FOREIGN KEY。
    - 參照：users(user_id)。
 
-3. booking_id INTEGER
+3. booking_id INT
    - 意義：相關預約。
    - 限制：允許為 NULL、FOREIGN KEY。
    - 參照：bookings(booking_id)。
@@ -627,7 +629,7 @@ Trigger 限制：
    - 意義：通知內容。
    - 限制：NOT NULL。
 
-5. is_read INTEGER
+5. is_read TINYINT(1)
    - 意義：是否已讀。
    - 限制：NOT NULL、DEFAULT 0、CHECK (is_read IN (0, 1))。
    - 允許值：0 表示未讀，1 表示已讀。
@@ -796,8 +798,13 @@ Trigger 限制：
    - 原因：待審核案件尚未占用教室，管理員核准時將再次執行驗證。
 
 8. 外鍵總體檢查
-   - 執行：PRAGMA foreign_key_check;
-   - 結果：無錯誤。
+   - 執行：MariaDB InnoDB 於資料異動時檢查 FOREIGN KEY。
+   - 結果：所有合法範例均成功建立；不存在之教室參照會被拒絕。
+
+實測環境：
+MariaDB 11.4.12。實測成功建立 10 張資料表與 4 個衝突驗證
+Trigger，並確認 utf8mb4 中文資料、CHECK 限制、FOREIGN KEY 限制、
+固定課表衝突拒絕、已核准預約重疊拒絕與待審核案件並存規則。
 
 
 十二、目前已完成範圍
@@ -805,7 +812,7 @@ Trigger 限制：
 
 已完成：
 1. 正式資料庫設計簡報。
-2. 10 張資料表的完整 SQLite Schema。
+2. 10 張資料表的完整 MariaDB Schema。
 3. 主鍵、外鍵、NOT NULL、UNIQUE、CHECK 限制。
 4. 固定課表與已核准預約的 Trigger。
 5. 常用查詢索引。
@@ -817,6 +824,8 @@ Trigger 限制：
 11. diagrams.net 可編輯實體關聯圖。
 12. SQL Schema 架構、方法、依據與範例之獨立說明文件。
 13. 10 個實體之獨立詳細說明文件。
+14. 10 個實體之局部 Mermaid 關聯圖、關聯意義與使用範例。
+15. 可逐層點選文件與實體說明之專案總覽。
 
 
 十三、後續擴充項目
@@ -850,16 +859,16 @@ Trigger 限制：
 十四、執行方式
 ------------------------------------------------------------
 
-使用 SQLite CLI：
+使用 MariaDB CLI：
 
-sqlite3 classroom_rental.db ".read schema.sql"
-sqlite3 classroom_rental.db ".read examples.sql"
+mariadb -u root -p -e "CREATE DATABASE IF NOT EXISTS classroom_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb -u root -p classroom_rental < schema.sql
+mariadb -u root -p classroom_rental < examples.sql
 
-使用其他 SQLite 工具時，應依序執行：
+使用其他 MariaDB 管理工具時，應先建立 classroom_rental 資料庫，再依序執行：
 1. schema.sql
 2. examples.sql
 
 注意：
-每次建立連線時需確認 SQLite 已啟用外鍵：
-
-PRAGMA foreign_keys = ON;
+正式 Schema 的所有資料表均明確指定 ENGINE=InnoDB，並使用
+DEFAULT CHARSET=utf8mb4 與 COLLATE=utf8mb4_unicode_ci。

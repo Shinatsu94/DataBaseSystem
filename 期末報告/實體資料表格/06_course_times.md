@@ -1,5 +1,7 @@
 # 06. course_times：固定授課時間
 
+> [返回專案總覽](../專案總覽.md) | [返回實體索引](./README.md)
+
 ## 用途
 
 保存課程固定排課資訊，包括課程、教室、星期與節次範圍。
@@ -8,21 +10,37 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `course_time_id` | `INTEGER` | 是 | PK | 自動編號 | `PRIMARY KEY AUTOINCREMENT` | 固定授課時間識別碼 |
+| 1 | `course_time_id` | `INT` | 是 | PK | 自動編號 | `PRIMARY KEY AUTO_INCREMENT` | 固定授課時間識別碼 |
 | 2 | `course_id` | `VARCHAR(20)` | 是 | FK → `course_info.course_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 所屬課程 |
 | 3 | `classroom_id` | `VARCHAR(10)` | 是 | FK → `classrooms.classroom_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 授課教室 |
-| 4 | `day_of_week` | `INTEGER` | 是 | - | 無 | `NOT NULL`、`CHECK (day_of_week BETWEEN 1 AND 7)` | 星期：`1` 為星期一，`7` 為星期日 |
-| 5 | `start_section_id` | `INTEGER` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 開始節次 |
-| 6 | `end_section_id` | `INTEGER` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在、`CHECK (start_section_id <= end_section_id)` | 結束節次 |
+| 4 | `day_of_week` | `INT` | 是 | - | 無 | `NOT NULL`、`CHECK (day_of_week BETWEEN 1 AND 7)` | 星期：`1` 為星期一，`7` 為星期日 |
+| 5 | `start_section_id` | `INT` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 開始節次 |
+| 6 | `end_section_id` | `INT` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在、`CHECK (start_section_id <= end_section_id)` | 結束節次 |
+
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    course_info["course_info<br/>課程資訊"]
+    classrooms["classrooms<br/>教室"]
+    sections["sections<br/>節次"]
+    course_times["course_times<br/>固定授課時間"]
+    bookings["bookings<br/>單次預約"]
+
+    course_info -->|"1 : N<br/>所屬課程"| course_times
+    classrooms -->|"1 : N<br/>授課教室"| course_times
+    sections -->|"1 : N<br/>開始與結束節次"| course_times
+    course_times -.->|"1 : N<br/>可選課程參照"| bookings
+```
 
 ## 關聯實體
 
-| 關聯實體 | 關聯類型 | 本實體外鍵或對方外鍵 | 說明 |
-|---|---|---|---|
-| `course_info` | `course_info` 1:N `course_times` | `course_times.course_id` → `course_info.course_id` | 每筆固定時段隸屬一門課程 |
-| `classrooms` | `classrooms` 1:N `course_times` | `course_times.classroom_id` → `classrooms.classroom_id` | 每筆固定時段使用一間教室 |
-| `sections` | `sections` 1:N `course_times` | `start_section_id`、`end_section_id` → `sections.section_id` | 每筆固定時段指定開始與結束節次 |
-| `bookings` | `course_times` 1:N `bookings` | `bookings.course_time_id` → `course_times.course_time_id` | 課程相關之額外借用得參照固定授課時間 |
+| 關聯實體 | 關聯類型 | 本實體外鍵或對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `course_info` | `course_info` 1:N `course_times` | `course_times.course_id` → `course_info.course_id` | 每筆固定時段隸屬一門課程 | 課程 `CS-DB-001` 可具有星期二與星期四兩筆時段。 |
+| `classrooms` | `classrooms` 1:N `course_times` | `course_times.classroom_id` → `classrooms.classroom_id` | 每筆固定時段使用一間教室 | 星期二的資料庫系統課程使用 `A101`。 |
+| `sections` | `sections` 1:N `course_times` | `start_section_id`、`end_section_id` → `sections.section_id` | 每筆固定時段指定開始與結束節次 | 固定課表可指定第 2 至第 4 節。 |
+| `bookings` | `course_times` 1:N `bookings` | `bookings.course_time_id` → `course_times.course_time_id` | 課程相關之額外借用得參照固定授課時間 | 課程考試之額外借用可連結原固定課表；一般借用可留空。 |
 
 ## 其他邏輯規則
 

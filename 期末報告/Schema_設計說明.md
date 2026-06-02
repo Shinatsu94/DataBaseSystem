@@ -1,6 +1,6 @@
 # 教室租用系統：SQL Schema 設計說明
 
-本文件獨立說明 [`schema.sql`](./schema.sql) 的架構方法、設計依據、完整性限制、觸發器、索引與實際 SQL 範例。Schema 適用於 SQLite 3。
+本文件獨立說明 [`schema.sql`](./schema.sql) 的架構方法、設計依據、完整性限制、觸發器、索引與實際 SQL 範例。Schema 適用於 MariaDB。
 
 ## 目錄
 
@@ -35,6 +35,17 @@
 5. **限制欄位值域**：以 `NOT NULL`、`UNIQUE`、`CHECK` 與 `DEFAULT` 限制可接受資料。
 6. **處理跨表商業規則**：以 Trigger 查詢其他資料表，阻擋固定課表與已核准預約之衝突。
 7. **建立索引**：依常用查詢條件建立複合索引，以支援教室時段查詢、使用者歷史紀錄與未讀通知查詢。
+
+### MariaDB 架構設定
+
+| 設定 | 用途 |
+|---|---|
+| `ENGINE=InnoDB` | 啟用 MariaDB 外鍵參照完整性與交易型資料表支援。 |
+| `DEFAULT CHARSET=utf8mb4` | 完整保存繁體中文與其他 Unicode 文字。 |
+| `COLLATE=utf8mb4_unicode_ci` | 提供一般文字欄位之 Unicode 比對規則。 |
+| `AUTO_INCREMENT` | 為交易資料表產生自動遞增識別碼。 |
+| `TIME` | 保存節次起訖時間，避免以一般文字欄位處理時間。 |
+| `SIGNAL SQLSTATE '45000'` | 由觸發器阻擋違反時段衝突規則之異動。 |
 
 ## 設計依據
 
@@ -84,17 +95,13 @@
 CREATE TABLE classrooms (
   classroom_id VARCHAR(10) PRIMARY KEY,
   classroom_name VARCHAR(50) NOT NULL,
-  capacity INTEGER NOT NULL
-);
+  capacity INT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
 ### 參照完整性
 
-外鍵必須參照至已存在之父資料。SQLite 執行時須啟用外鍵：
-
-```sql
-PRAGMA foreign_keys = ON;
-```
+外鍵必須參照至已存在之父資料。本 Schema 的資料表皆使用 MariaDB `InnoDB` 儲存引擎，由資料庫在新增、修改與刪除時執行參照完整性檢查。
 
 單次預約之申請人與教室皆須存在：
 
@@ -143,6 +150,8 @@ NEW.start_section_id <= existing.end_section_id
 AND NEW.end_section_id >= existing.start_section_id
 ```
 
+MariaDB 的 `WEEKDAY(date) + 1` 會將星期一至星期日轉換為 `1` 至 `7`，與本 Schema 的星期欄位定義一致。觸發器遇到衝突時，使用 `SIGNAL SQLSTATE '45000'` 終止資料異動。
+
 ## 索引設計
 
 | 索引 | 欄位 | 用途 |
@@ -157,9 +166,18 @@ AND NEW.end_section_id >= existing.start_section_id
 進入本目錄後，依序執行：
 
 ```powershell
-sqlite3 classroom_rental.db ".read schema.sql"
-sqlite3 classroom_rental.db ".read examples.sql"
+mariadb -u root -p -e "CREATE DATABASE IF NOT EXISTS classroom_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb -u root -p classroom_rental < schema.sql
+mariadb -u root -p classroom_rental < examples.sql
 ```
+
+## MariaDB 官方文件依據
+
+- [`AUTO_INCREMENT`](https://mariadb.com/docs/server/reference/data-types/auto_increment)
+- [`FOREIGN KEY Constraints`](https://mariadb.com/docs/server/architecture/server-constraints/foreign-key-constraints)
+- [`CREATE TRIGGER`](https://mariadb.com/docs/server/server-usage/triggers-events/triggers/create-trigger)
+- [`SIGNAL`](https://mariadb.com/kb/en/signal/)
+- [`WEEKDAY`](https://mariadb.com/docs/server/reference/sql-functions/date-time-functions/weekday)
 
 ## SQL 範例
 

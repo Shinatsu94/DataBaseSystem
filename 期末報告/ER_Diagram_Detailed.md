@@ -10,23 +10,23 @@
 flowchart LR
     users["<b>users 使用者</b><br/>PK user_id : CHAR(8)<br/>username : VARCHAR(30)<br/>UK email : VARCHAR(100)<br/>role : VARCHAR(10)<br/>department : VARCHAR(50), NULL"]
 
-    classrooms["<b>classrooms 教室</b><br/>PK classroom_id : VARCHAR(10)<br/>classroom_name : VARCHAR(50)<br/>capacity : INTEGER<br/>is_active : INTEGER"]
+    classrooms["<b>classrooms 教室</b><br/>PK classroom_id : VARCHAR(10)<br/>classroom_name : VARCHAR(50)<br/>capacity : INT<br/>is_active : TINYINT(1)"]
 
-    sections["<b>sections 節次</b><br/>PK section_id : INTEGER<br/>UK section_name : VARCHAR(20)<br/>start_time : CHAR(5)<br/>end_time : CHAR(5)"]
+    sections["<b>sections 節次</b><br/>PK section_id : INT<br/>UK section_name : VARCHAR(20)<br/>start_time : TIME<br/>end_time : TIME"]
 
-    statuses["<b>booking_statuses 審核狀態</b><br/>PK status_id : INTEGER<br/>UK status_code : VARCHAR(10)<br/>status_name : VARCHAR(20)"]
+    statuses["<b>booking_statuses 審核狀態</b><br/>PK status_id : INT<br/>UK status_code : VARCHAR(10)<br/>status_name : VARCHAR(20)"]
 
-    course_info["<b>course_info 課程資訊</b><br/>PK course_id : VARCHAR(20)<br/>academic_year : INTEGER<br/>semester : INTEGER<br/>course_name : VARCHAR(100)<br/>FK teacher_id : CHAR(8)"]
+    course_info["<b>course_info 課程資訊</b><br/>PK course_id : VARCHAR(20)<br/>academic_year : INT<br/>semester : INT<br/>course_name : VARCHAR(100)<br/>FK teacher_id : CHAR(8)"]
 
-    course_times["<b>course_times 固定授課時間</b><br/>PK course_time_id : INTEGER<br/>FK course_id : VARCHAR(20)<br/>FK classroom_id : VARCHAR(10)<br/>day_of_week : INTEGER<br/>FK start_section_id : INTEGER<br/>FK end_section_id : INTEGER"]
+    course_times["<b>course_times 固定授課時間</b><br/>PK course_time_id : INT<br/>FK course_id : VARCHAR(20)<br/>FK classroom_id : VARCHAR(10)<br/>day_of_week : INT<br/>FK start_section_id : INT<br/>FK end_section_id : INT"]
 
-    long_term["<b>long_term_bookings 長期借用</b><br/>PK long_term_id : INTEGER<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>start_date : DATE<br/>end_date : DATE<br/>day_of_week : INTEGER<br/>FK start_section_id : INTEGER<br/>FK end_section_id : INTEGER<br/>reason : VARCHAR(200)<br/>FK status_id : INTEGER<br/>created_at : DATETIME"]
+    long_term["<b>long_term_bookings 長期借用</b><br/>PK long_term_id : INT<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>start_date : DATE<br/>end_date : DATE<br/>day_of_week : INT<br/>FK start_section_id : INT<br/>FK end_section_id : INT<br/>reason : VARCHAR(200)<br/>FK status_id : INT<br/>created_at : DATETIME"]
 
-    bookings["<b>bookings 單次預約</b><br/>PK booking_id : INTEGER<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>FK long_term_id : INTEGER, NULL<br/>FK course_time_id : INTEGER, NULL<br/>booking_date : DATE<br/>FK start_section_id : INTEGER<br/>FK end_section_id : INTEGER<br/>reason : VARCHAR(200)<br/>FK status_id : INTEGER<br/>created_at : DATETIME"]
+    bookings["<b>bookings 單次預約</b><br/>PK booking_id : INT<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>FK long_term_id : INT, NULL<br/>FK course_time_id : INT, NULL<br/>booking_date : DATE<br/>FK start_section_id : INT<br/>FK end_section_id : INT<br/>reason : VARCHAR(200)<br/>FK status_id : INT<br/>created_at : DATETIME"]
 
-    reviews["<b>booking_reviews 審核歷程</b><br/>PK review_id : INTEGER<br/>FK booking_id : INTEGER<br/>FK reviewer_id : CHAR(8)<br/>FK status_id : INTEGER<br/>comment : VARCHAR(300), NULL<br/>reviewed_at : DATETIME"]
+    reviews["<b>booking_reviews 審核歷程</b><br/>PK review_id : INT<br/>FK booking_id : INT<br/>FK reviewer_id : CHAR(8)<br/>FK status_id : INT<br/>comment : VARCHAR(300), NULL<br/>reviewed_at : DATETIME"]
 
-    notifications["<b>notifications 通知</b><br/>PK notification_id : INTEGER<br/>FK recipient_id : CHAR(8)<br/>FK booking_id : INTEGER, NULL<br/>message : VARCHAR(300)<br/>is_read : INTEGER<br/>created_at : DATETIME"]
+    notifications["<b>notifications 通知</b><br/>PK notification_id : INT<br/>FK recipient_id : CHAR(8)<br/>FK booking_id : INT, NULL<br/>message : VARCHAR(300)<br/>is_read : TINYINT(1)<br/>created_at : DATETIME"]
 
     users -->|"1 : N<br/>teacher_id 教授"| course_info
     users -->|"1 : N<br/>applicant_id 提出長期借用"| long_term

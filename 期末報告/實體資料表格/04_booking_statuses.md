@@ -1,5 +1,7 @@
 # 04. booking_statuses：審核狀態
 
+> [返回專案總覽](../專案總覽.md) | [返回實體索引](./README.md)
+
 ## 用途
 
 集中保存預約狀態，避免各交易資料表重複輸入不一致的狀態文字。
@@ -8,17 +10,31 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `status_id` | `INTEGER` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 狀態識別碼 |
+| 1 | `status_id` | `INT` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 狀態識別碼 |
 | 2 | `status_code` | `VARCHAR(10)` | 是 | UK | 無 | `NOT NULL`、`UNIQUE`、`CHECK (status_code IN ('pending', 'approved', 'rejected', 'canceled'))` | 程式使用的狀態代碼 |
 | 3 | `status_name` | `VARCHAR(20)` | 是 | - | 無 | `NOT NULL` | 顯示名稱，例如待審核、已核准 |
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    statuses["booking_statuses<br/>審核狀態"]
+    long_term["long_term_bookings<br/>長期借用"]
+    bookings["bookings<br/>單次預約"]
+    reviews["booking_reviews<br/>審核歷程"]
+
+    statuses -->|"1 : N<br/>目前狀態"| long_term
+    statuses -->|"1 : N<br/>目前狀態"| bookings
+    statuses -->|"1 : N<br/>審核結果"| reviews
+```
+
 ## 關聯實體
 
-| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 |
-|---|---|---|---|
-| `long_term_bookings` | `booking_statuses` 1:N `long_term_bookings` | `long_term_bookings.status_id` → `booking_statuses.status_id` | 長期借用保存目前狀態 |
-| `bookings` | `booking_statuses` 1:N `bookings` | `bookings.status_id` → `booking_statuses.status_id` | 單次預約保存目前狀態 |
-| `booking_reviews` | `booking_statuses` 1:N `booking_reviews` | `booking_reviews.status_id` → `booking_statuses.status_id` | 審核歷程保存每次審核結果 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `long_term_bookings` | `booking_statuses` 1:N `long_term_bookings` | `long_term_bookings.status_id` → `booking_statuses.status_id` | 長期借用保存目前狀態 | 多筆長期借用可同時處於 `pending`。 |
+| `bookings` | `booking_statuses` 1:N `bookings` | `bookings.status_id` → `booking_statuses.status_id` | 單次預約保存目前狀態 | 管理員將預約由 `pending` 更新為 `approved`。 |
+| `booking_reviews` | `booking_statuses` 1:N `booking_reviews` | `booking_reviews.status_id` → `booking_statuses.status_id` | 審核歷程保存每次審核結果 | 一筆審核歷程保存當次結果為 `rejected`。 |
 
 ## 其他邏輯規則
 

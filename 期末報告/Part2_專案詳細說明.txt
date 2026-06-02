@@ -113,7 +113,6 @@ NULL，也不可重複。
 classrooms 資料表中已存在的教室。SQLite 執行時必須啟用：
 
 PRAGMA foreign_keys = ON;
-
 5.3 域完整性（Domain Integrity）
 
 欄位必須符合允許的資料型態、格式或值域。例如：
@@ -823,4 +822,3 @@ sqlite3 classroom_rental.db ".read Part2_examples.sql"
 每次建立連線時需確認 SQLite 已啟用外鍵：
 
 PRAGMA foreign_keys = ON;
-

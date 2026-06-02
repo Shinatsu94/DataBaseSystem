@@ -55,12 +55,16 @@
 - `CHECK` 限制用於驗證角色、狀態、日期、節次與教室容量。
 - 觸發器用於阻擋固定課表與已核准預約之時段衝突。
 
-## 期末報告
+## 完整資料庫設計報告
 
-期末報告資料位於 [`期末報告`](./期末報告)：
+完整報告位於 [`期末報告`](./期末報告)。報告首頁呈現實體關聯圖，並整合系統需求、Schema 架構、SQL 範例、驗證結果與附件導覽。
 
-- Part 1：教室租用系統資料庫設計簡報。
-- Part 2：完整 SQLite Schema、範例資料、查詢、衝突測試、Mermaid 實體關聯圖與各實體詳細說明。
+主要文件：
+
+- [`期末報告/README.md`](./期末報告/README.md)：完整報告首頁。
+- [`期末報告/Schema_設計說明.md`](./期末報告/Schema_設計說明.md)：SQL Schema 方法、依據與範例。
+- [`期末報告/schema.sql`](./期末報告/schema.sql)：正式 SQLite 建表語法。
+- [`期末報告/專案詳細說明.txt`](./期末報告/專案詳細說明.txt)：完整文字版專案說明。
+- [`期末報告/ER_Diagram_Detailed.drawio`](./期末報告/ER_Diagram_Detailed.drawio)：可於 diagrams.net 編輯之詳細 ER 圖。
 
 [`期中報告/create_db.sql`](./期中報告/create_db.sql) 保留為初期版本。
-正式建表語法位於 [`期末報告/Part2_schema.sql`](./期末報告/Part2_schema.sql)。

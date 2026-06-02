@@ -1,13 +1,49 @@
 教室租用系統：專案與資料庫 Schema 詳細說明
 ============================================================
 
-文件版本：1.0
+文件版本：2.0
 適用資料庫：SQLite 3
-對應檔案：
-1. Part1_教室租用系統資料庫設計.pptx
-2. Part2_schema.sql
-3. Part2_examples.sql
-4. Part2_驗證說明.md
+文件定位：
+本文件為教室租用系統資料庫專案之完整文字版說明。內容整合系統
+目標、需求、資料庫方法、設計依據、各實體、完整性限制、關聯、
+觸發器、索引、SQL 範例、驗證結果與後續擴充項目。
+
+主要對應檔案：
+1. README.md
+   - 用途：GitHub 報告首頁。
+   - 內容：實體關聯圖、系統摘要、執行方式、驗證摘要與文件導覽。
+
+2. Schema_設計說明.md
+   - 用途：獨立說明 SQL Schema 架構。
+   - 內容：設計方法、正規化依據、完整性限制、觸發器、索引與範例。
+
+3. schema.sql
+   - 用途：建立正式 SQLite 資料庫。
+   - 內容：10 張資料表、外鍵、CHECK、索引與防止時段衝突之觸發器。
+
+4. examples.sql
+   - 用途：建立示範資料並執行查詢。
+   - 內容：狀態、使用者、教室、節次、課程、預約、審核、通知與
+     可取消註解之衝突測試。
+
+5. 驗證說明.md
+   - 用途：整理已完成之正確資料與錯誤資料驗證結果。
+
+6. ER_Diagram.md
+   - 用途：提供 GitHub 首頁與簡報使用之精簡 Mermaid 關聯圖。
+
+7. ER_Diagram_Detailed.md
+   - 用途：提供完整欄位、鍵值與關聯基數之詳細 Mermaid 關聯圖。
+
+8. ER_Diagram_Detailed.drawio
+   - 用途：提供 diagrams.net 可編輯之詳細實體關聯圖。
+
+9. 實體資料表格/
+   - 用途：保存 10 個實體之獨立說明文件。
+   - 內容：每個實體均包含用途、欄位表格、關聯實體與邏輯規則。
+
+10. 教室租用系統資料庫設計簡報.pptx
+    - 用途：提供課堂口頭報告使用之簡報。
 
 
 一、專案題目與目標
@@ -711,7 +747,7 @@ Trigger 限制：
 十、SQL 範例流程
 ------------------------------------------------------------
 
-範例檔案：Part2_examples.sql
+範例檔案：examples.sql
 
 流程：
 1. 新增 pending、approved、rejected、canceled 四種審核狀態。
@@ -768,7 +804,7 @@ Trigger 限制：
 ------------------------------------------------------------
 
 已完成：
-1. Part 1 正式簡報。
+1. 正式資料庫設計簡報。
 2. 10 張資料表的完整 SQLite Schema。
 3. 主鍵、外鍵、NOT NULL、UNIQUE、CHECK 限制。
 4. 固定課表與已核准預約的 Trigger。
@@ -776,6 +812,11 @@ Trigger 限制：
 6. 範例資料與查詢。
 7. 錯誤案例驗證。
 8. GitHub 協作分支 codex/part1-part2-schema。
+9. GitHub 報告首頁。
+10. Mermaid 精簡版與詳細版實體關聯圖。
+11. diagrams.net 可編輯實體關聯圖。
+12. SQL Schema 架構、方法、依據與範例之獨立說明文件。
+13. 10 個實體之獨立詳細說明文件。
 
 
 十三、後續擴充項目
@@ -811,12 +852,12 @@ Trigger 限制：
 
 使用 SQLite CLI：
 
-sqlite3 classroom_rental.db ".read Part2_schema.sql"
-sqlite3 classroom_rental.db ".read Part2_examples.sql"
+sqlite3 classroom_rental.db ".read schema.sql"
+sqlite3 classroom_rental.db ".read examples.sql"
 
 使用其他 SQLite 工具時，應依序執行：
-1. Part2_schema.sql
-2. Part2_examples.sql
+1. schema.sql
+2. examples.sql
 
 注意：
 每次建立連線時需確認 SQLite 已啟用外鍵：

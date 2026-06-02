@@ -1,6 +1,13 @@
 -- 教室租用系統：完整資料庫 Schema
 -- Target DBMS: SQLite 3
--- 使用方式：sqlite3 classroom_rental.db < Part2_schema.sql
+-- 使用方式：sqlite3 classroom_rental.db < schema.sql
+-- 設計說明：請參閱 Schema_設計說明.md
+--
+-- 檔案內容：
+-- 1. 建立 10 張資料表。
+-- 2. 建立主鍵、外鍵、NOT NULL、UNIQUE、DEFAULT 與 CHECK 限制。
+-- 3. 建立固定課表與已核准預約之衝突驗證觸發器。
+-- 4. 建立常用查詢索引。
 
 PRAGMA foreign_keys = ON;
 

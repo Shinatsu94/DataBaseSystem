@@ -46,3 +46,13 @@ This project is used for database learning in NFU classes.
 
 ## 實體關係圖詳細說明
 實體關係圖(ER Diagram)  
+
+## 期末報告
+
+期末報告資料已整理至 [`期末報告`](./期末報告)：
+
+- Part 1：教室租用系統資料庫設計簡報。
+- Part 2：完整 SQLite Schema、範例資料、查詢與衝突測試。
+
+原本 [`期中報告/create_db.sql`](./期中報告/create_db.sql) 保留作為初期草稿，
+正式建表請使用 [`期末報告/Part2_schema.sql`](./期末報告/Part2_schema.sql)。

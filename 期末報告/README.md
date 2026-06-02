@@ -6,6 +6,7 @@
 - 內容包含題目、應用情境與使用案例、系統需求、完整性限制、ER Diagram 與關聯說明。
 - `ER_Diagram.md`：使用 Mermaid 語法繪製之精簡版實體關聯圖。
 - `ER_Diagram_Detailed.md`：包含完整欄位、鍵值與關聯基數之詳細版 Mermaid 實體關聯圖。
+- `ER_Diagram_Detailed.drawio`：使用 diagrams.net 製作之可編輯詳細實體關聯圖。
 
 ## Part 2：SQL Schema
 

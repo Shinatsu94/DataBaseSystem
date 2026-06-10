@@ -1,0 +1,56 @@
+# 06. `course_times` 固定授課時段
+
+> [返回規格索引](README.md) | [返回專案總覽](../../README.md)
+
+## 資料表用途
+
+`course_times` 將課程配置至固定的星期、教室與節次範圍，是固定課表與臨時預約衝突檢查的依據。
+
+## 欄位規格與設計理由
+
+| 欄位 | 型態 | 鍵值／預設 | 限制 | 系統用途 | 型態與限制理由 |
+|---|---|---|---|---|---|
+| `course_time_id` | `BIGINT UNSIGNED` | PK、`AUTO_INCREMENT` | `NOT NULL` | 固定課表紀錄識別碼 | 一門課程可有多筆時段，無適合的單一自然鍵，因此使用自動遞增代理鍵。 |
+| `course_id` | `VARCHAR(20)` | FK | `NOT NULL` | 指定所屬課程 | 型態與 `course_info.course_id` 完全一致，外鍵確保課程存在。 |
+| `classroom_id` | `VARCHAR(10)` | FK | `NOT NULL` | 指定授課教室 | 型態與 `classrooms.classroom_id` 一致，避免不存在的教室進入課表。 |
+| `day_of_week` | `TINYINT UNSIGNED` | 無 | `NOT NULL`、`CHECK 1..7` | 表示星期一至星期日 | 值域固定且不得為負值，`1` 對應星期一、`7` 對應星期日。 |
+| `start_section_id` | `TINYINT UNSIGNED` | FK | `NOT NULL` | 固定課程開始節次 | 參照 `sections`，避免重複保存時間。 |
+| `end_section_id` | `TINYINT UNSIGNED` | FK | `NOT NULL`、不得早於開始節次 | 固定課程結束節次 | 與開始節次使用相同 Domain，`CHECK` 防止反向範圍。 |
+
+## 關聯
+
+| 父實體 | 基數 | 用途 |
+|---|---|---|
+| `course_info` | `1:N` | 一門課程可具有多個固定時段。 |
+| `classrooms` | `1:N` | 一間教室可在不同星期與節次安排多門課。 |
+| `sections` | `1:N` | 節次可作為多筆課表的開始或結束。 |
+
+`bookings.course_time_id` 可選擇性參照本表，用於標示與特定課程時段相關的額外借用。
+
+## 其他邏輯規則
+
+1. 同一教室、同一星期的固定課表不得發生節次重疊。
+2. 新增或修改固定課表時，不得與相同教室、相同星期的已核准預約重疊。
+3. 星期值固定使用 `1` 至 `7`，並與 `WEEKDAY(date) + 1` 的結果一致。
+4. 開始節次不得晚於結束節次。
+
+## 對應 View
+
+```sql
+SELECT * FROM vw_course_times ORDER BY course_time_id;
+```
+
+## 10 筆範例資料
+
+| ID | 課程 | 教室 | 星期 | 節次 |
+|---:|---|---|---:|---|
+| 1 | CS-DB-001 | A101 | 2 | 2–4 |
+| 2 | CS-SE-002 | A102 | 3 | 3–4 |
+| 3 | CS-NET-003 | B201 | 4 | 1–2 |
+| 4 | CS-AI-004 | B202 | 5 | 5–6 |
+| 5 | CS-OS-005 | B205 | 1 | 2–3 |
+| 6 | CS-WEB-006 | C301 | 2 | 7–8 |
+| 7 | CS-SEC-007 | C302 | 3 | 5–6 |
+| 8 | CS-CLOUD-008 | D401 | 4 | 7–9 |
+| 9 | CS-IOT-009 | LAB501 | 5 | 1–3 |
+| 10 | CS-PROJ-010 | CONF01 | 1 | 9–10 |

@@ -1,17 +1,20 @@
--- 教室租用系統：完整資料庫 Schema
--- Target DBMS: MariaDB
--- 使用方式：mariadb -u root -p classroom_rental < schema.sql
--- 權限設定：建立 Schema 後另行執行 security.sql
--- 設計說明：請參閱 Schema_設計說明.md 與 權限與View設計.md
+-- 教室租用系統：完整 MariaDB Schema
+-- 適用版本：MariaDB 11.4 或更新版本
+-- 執行方式：mariadb -u root -p < 完整資料庫Schema.sql
 --
 -- 檔案內容：
--- 1. 建立 10 張資料表。
--- 2. 建立主鍵、外鍵、NOT NULL、UNIQUE、DEFAULT 與 CHECK 限制。
--- 3. 建立角色、審核資格與時段衝突驗證 Trigger。
--- 4. 建立常用查詢索引。
--- 5. 為 10 張資料表各建立一個 View。
+-- 1. 建立 classroom_rental 資料庫。
+-- 2. 建立 10 張資料表及完整性限制。
+-- 3. 建立 10 個資料驗證 Trigger。
+-- 4. 建立 4 個查詢索引。
+-- 5. 建立 10 個安全 View。
+-- 6. 建立學生、教師、管理員角色與欄位級權限。
 
 SET NAMES utf8mb4;
+CREATE DATABASE IF NOT EXISTS classroom_rental
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE classroom_rental;
 
 DROP VIEW IF EXISTS vw_notifications;
 DROP VIEW IF EXISTS vw_booking_reviews;
@@ -51,11 +54,14 @@ CREATE TABLE users (
   username    VARCHAR(60) NOT NULL,
   email       VARCHAR(254) NOT NULL UNIQUE,
   role        ENUM('student', 'teacher', 'admin') NOT NULL,
-  department  VARCHAR(80)
+  department  VARCHAR(80),
+  CONSTRAINT chk_users_id_format CHECK (
+    user_id REGEXP '^([0-9]{8}|T[0-9]{7}|A[0-9]{7})$'
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE classrooms (
-  classroom_id    CHAR(10) PRIMARY KEY,
+  classroom_id    VARCHAR(10) PRIMARY KEY,
   classroom_name  VARCHAR(80) NOT NULL,
   capacity        SMALLINT UNSIGNED NOT NULL,
   is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -65,7 +71,7 @@ CREATE TABLE classrooms (
 
 CREATE TABLE sections (
   section_id    TINYINT UNSIGNED PRIMARY KEY,
-  section_name  CHAR(20) NOT NULL UNIQUE,
+  section_name  VARCHAR(20) NOT NULL UNIQUE,
   start_time    TIME(0) NOT NULL,
   end_time      TIME(0) NOT NULL,
   CONSTRAINT chk_sections_clock_time CHECK (
@@ -77,12 +83,26 @@ CREATE TABLE sections (
 
 CREATE TABLE booking_statuses (
   status_id    TINYINT UNSIGNED PRIMARY KEY,
-  status_code  ENUM('pending', 'approved', 'rejected', 'canceled') NOT NULL UNIQUE,
-  status_name  CHAR(20) NOT NULL
+  status_code  VARCHAR(32) NOT NULL UNIQUE,
+  status_name  VARCHAR(20) NOT NULL,
+  CONSTRAINT chk_statuses_code CHECK (
+    status_code IN (
+      'draft',
+      'pending',
+      'under_review',
+      'approved',
+      'rejected',
+      'canceled',
+      'expired',
+      'completed',
+      'suspended',
+      'resubmission_required'
+    )
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE course_info (
-  course_id       CHAR(20) PRIMARY KEY,
+  course_id       VARCHAR(20) PRIMARY KEY,
   academic_year   SMALLINT UNSIGNED NOT NULL,
   semester        TINYINT UNSIGNED NOT NULL,
   course_name     VARCHAR(120) NOT NULL,
@@ -96,8 +116,8 @@ CREATE TABLE course_info (
 
 CREATE TABLE course_times (
   course_time_id    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  course_id         CHAR(20) NOT NULL,
-  classroom_id      CHAR(10) NOT NULL,
+  course_id         VARCHAR(20) NOT NULL,
+  classroom_id      VARCHAR(10) NOT NULL,
   day_of_week       TINYINT UNSIGNED NOT NULL,
   start_section_id  TINYINT UNSIGNED NOT NULL,
   end_section_id    TINYINT UNSIGNED NOT NULL,
@@ -116,7 +136,7 @@ CREATE TABLE course_times (
 CREATE TABLE long_term_bookings (
   long_term_id       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   applicant_id       CHAR(8) NOT NULL,
-  classroom_id       CHAR(10) NOT NULL,
+  classroom_id       VARCHAR(10) NOT NULL,
   start_date         DATE NOT NULL,
   end_date           DATE NOT NULL,
   day_of_week        TINYINT UNSIGNED NOT NULL,
@@ -143,7 +163,7 @@ CREATE TABLE long_term_bookings (
 CREATE TABLE bookings (
   booking_id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   applicant_id       CHAR(8) NOT NULL,
-  classroom_id       CHAR(10) NOT NULL,
+  classroom_id       VARCHAR(10) NOT NULL,
   long_term_id       BIGINT UNSIGNED,
   course_time_id     BIGINT UNSIGNED,
   booking_date       DATE NOT NULL,
@@ -331,7 +351,7 @@ FOR EACH ROW
 BEGIN
   DECLARE actor_id CHAR(80);
   DECLARE actor_role CHAR(10);
-  DECLARE new_status CHAR(10);
+  DECLARE new_status VARCHAR(32);
 
   SET actor_id = SUBSTRING_INDEX(USER(), '@', 1);
   SET actor_role = (
@@ -372,8 +392,8 @@ FOR EACH ROW
 BEGIN
   DECLARE actor_id CHAR(80);
   DECLARE actor_role CHAR(10);
-  DECLARE old_status CHAR(10);
-  DECLARE new_status CHAR(10);
+  DECLARE old_status VARCHAR(32);
+  DECLARE new_status VARCHAR(32);
 
   SET actor_id = SUBSTRING_INDEX(USER(), '@', 1);
   SET actor_role = (
@@ -416,7 +436,7 @@ FOR EACH ROW
 BEGIN
   DECLARE actor_id CHAR(80);
   DECLARE actor_role CHAR(10);
-  DECLARE new_status CHAR(10);
+  DECLARE new_status VARCHAR(32);
 
   SET actor_id = SUBSTRING_INDEX(USER(), '@', 1);
   SET actor_role = (
@@ -489,8 +509,8 @@ FOR EACH ROW
 BEGIN
   DECLARE actor_id CHAR(80);
   DECLARE actor_role CHAR(10);
-  DECLARE old_status CHAR(10);
-  DECLARE new_status CHAR(10);
+  DECLARE old_status VARCHAR(32);
+  DECLARE new_status VARCHAR(32);
 
   SET actor_id = SUBSTRING_INDEX(USER(), '@', 1);
   SET actor_role = (
@@ -703,3 +723,66 @@ WHERE recipient_id = SUBSTRING_INDEX(USER(), '@', 1)
      WHERE account.user_id = SUBSTRING_INDEX(USER(), '@', 1)
    ) = 'admin'
 WITH CASCADED CHECK OPTION;
+
+-- MariaDB 角色與權限。
+CREATE ROLE IF NOT EXISTS classroom_student_role;
+CREATE ROLE IF NOT EXISTS classroom_teacher_role;
+CREATE ROLE IF NOT EXISTS classroom_admin_role;
+
+-- 教師繼承學生權限；管理員繼承教師權限。
+GRANT classroom_student_role TO classroom_teacher_role;
+GRANT classroom_teacher_role TO classroom_admin_role;
+
+-- 學生：讀取公開資料與個人資料，維護自己的單次預約及通知讀取狀態。
+GRANT SHOW VIEW ON classroom_rental.* TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_users TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_classrooms TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_sections TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_booking_statuses TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_bookings TO classroom_student_role;
+GRANT INSERT (
+  applicant_id, classroom_id, booking_date,
+  start_section_id, end_section_id, reason, status_id
+) ON classroom_rental.vw_bookings TO classroom_student_role;
+GRANT UPDATE (
+  classroom_id, booking_date, start_section_id,
+  end_section_id, reason, status_id
+) ON classroom_rental.vw_bookings TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_booking_reviews TO classroom_student_role;
+GRANT SELECT ON classroom_rental.vw_notifications TO classroom_student_role;
+GRANT UPDATE (is_read)
+  ON classroom_rental.vw_notifications TO classroom_student_role;
+
+-- 教師：繼承學生權限，增加課程查詢及個人長期借用維護權限。
+GRANT SELECT ON classroom_rental.vw_course_info TO classroom_teacher_role;
+GRANT SELECT ON classroom_rental.vw_course_times TO classroom_teacher_role;
+GRANT SELECT ON classroom_rental.vw_long_term_bookings
+  TO classroom_teacher_role;
+GRANT INSERT (
+  applicant_id, classroom_id, start_date, end_date, day_of_week,
+  start_section_id, end_section_id, reason, status_id
+) ON classroom_rental.vw_long_term_bookings TO classroom_teacher_role;
+GRANT UPDATE (
+  classroom_id, start_date, end_date, day_of_week,
+  start_section_id, end_section_id, reason, status_id
+) ON classroom_rental.vw_long_term_bookings TO classroom_teacher_role;
+
+-- 管理員：管理全部基礎資料、交易資料及 View。
+GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW
+  ON classroom_rental.* TO classroom_admin_role;
+
+-- 帳號建立範例。正式密碼必須由密碼管理器產生，不得提交至版本控制。
+-- CREATE USER IF NOT EXISTS '41243149'@'localhost'
+--   IDENTIFIED BY 'replace-with-strong-password';
+-- GRANT classroom_student_role TO '41243149'@'localhost';
+-- SET DEFAULT ROLE classroom_student_role FOR '41243149'@'localhost';
+--
+-- CREATE USER IF NOT EXISTS 'T0000001'@'localhost'
+--   IDENTIFIED BY 'replace-with-strong-password';
+-- GRANT classroom_teacher_role TO 'T0000001'@'localhost';
+-- SET DEFAULT ROLE classroom_teacher_role FOR 'T0000001'@'localhost';
+--
+-- CREATE USER IF NOT EXISTS 'A0000001'@'localhost'
+--   IDENTIFIED BY 'replace-with-strong-password';
+-- GRANT classroom_admin_role TO 'A0000001'@'localhost';
+-- SET DEFAULT ROLE classroom_admin_role FOR 'A0000001'@'localhost';

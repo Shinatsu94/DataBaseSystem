@@ -1,0 +1,74 @@
+# 10. `notifications` 通知
+
+> [返回規格索引](README.md) | [返回專案總覽](../../README.md)
+
+## 資料表用途
+
+`notifications` 保存系統傳送給使用者的通知內容與讀取狀態。通知可關聯特定預約，也可作為不隸屬任何預約的一般系統公告。
+
+## 欄位規格與設計理由
+
+| 欄位 | 型態 | 鍵值／預設 | 限制 | 系統用途 | 型態與限制理由 |
+|---|---|---|---|---|---|
+| `notification_id` | `BIGINT UNSIGNED` | PK、`AUTO_INCREMENT` | `NOT NULL` | 通知識別碼 | 通知量會長期累積，使用大型無號代理鍵避免編號範圍不足。 |
+| `recipient_id` | `CHAR(8)` | FK | `NOT NULL` | 指定通知收件人 | 校內帳號固定八碼；外鍵確保通知只傳送給已登錄使用者。 |
+| `booking_id` | `BIGINT UNSIGNED` | FK、`NULL` | 可為空 | 選擇性關聯單次預約 | 預約審核通知需要關聯案件；一般公告沒有預約來源，因此允許 `NULL`。 |
+| `message` | `TEXT` | 無 | `NOT NULL` | 保存完整通知內容 | 通知長度不固定，且每筆通知必須具有可讀內容。 |
+| `is_read` | `BOOLEAN` | `FALSE` | `NOT NULL`、值域檢查 | 表示使用者是否已閱讀 | 真偽狀態只需兩種值；預設未讀可確保新通知會出現在未讀清單。 |
+| `created_at` | `TIMESTAMP(6)` | `CURRENT_TIMESTAMP(6)` | `NOT NULL` | 保存通知建立事件時間 | 記錄日期、時分秒及六位小數秒，並依 MariaDB 連線時區轉換，適合排序及追蹤傳送時間。 |
+
+## 關聯
+
+| 關聯實體 | 基數 | 必填 | 關聯意義 |
+|---|---|---|---|
+| `users` | `1:N` | 是 | 一位使用者可收到多筆通知；每筆通知必須具有一位收件人。 |
+| `bookings` | `1:N` | 否 | 一筆預約可產生多筆通知；一般公告可不參照預約。 |
+
+```mermaid
+flowchart LR
+    users["users<br/>使用者"]
+    bookings["bookings<br/>單次預約"]
+    notifications["notifications<br/>通知"]
+
+    users -->|"1 : N<br/>recipient_id"| notifications
+    bookings -.->|"1 : N<br/>booking_id 可選參照"| notifications
+```
+
+## 其他邏輯規則
+
+1. 新增通知時 `is_read` 預設為 `FALSE`，表示尚未閱讀。
+2. 學生與教師只能透過 `vw_notifications` 查看自己的通知，並且只能修改自己的 `is_read`。
+3. 管理員可建立與管理通知，但不得使用一般帳號 View 讀取其他人的個人通知。
+4. `booking_id` 為 `NULL` 時代表一般公告；非空值時必須參照已存在的預約。
+5. `idx_notifications_recipient_read` 依收件人及讀取狀態建立複合索引，用於快速取得個人未讀通知。
+
+## 對應 View
+
+```sql
+SELECT *
+FROM vw_notifications
+ORDER BY created_at DESC;
+
+UPDATE vw_notifications
+SET is_read = TRUE
+WHERE notification_id = 3;
+
+SHOW CREATE VIEW vw_notifications;
+```
+
+View 依 MariaDB 登入帳號限制資料列；一般使用者只能更新 `is_read` 欄位。
+
+## 10 筆範例資料
+
+| ID | 收件人 | 預約 ID | 已讀 | 通知摘要 |
+|---:|---|---:|---|---|
+| 1 | 41243149 | 1 | 否 | 草稿尚未送出 |
+| 2 | 41243151 | 2 | 是 | 申請已送出並等待審核 |
+| 3 | 41243154 | 3 | 否 | 正在確認設備需求 |
+| 4 | T0000004 | 4 | 是 | 教室借用已核准 |
+| 5 | T0000001 | 5 | 否 | 設備維護期間無法核准 |
+| 6 | T0000002 | 6 | 是 | 教室借用已取消 |
+| 7 | T0000003 | 7 | 是 | 申請已逾期結案 |
+| 8 | T0000004 | 8 | 是 | 使用完成且設備正常 |
+| 9 | T0000001 | 9 | 否 | 實驗室暫停開放 |
+| 10 | T0000002 | 10 | 否 | 申請資料需要補充 |

@@ -1,0 +1,38 @@
+# 資料表詳細規格
+
+> [返回專案總覽](../../README.md) | [完整 Schema 架構](../資料庫設計/完整資料庫Schema架構與說明.md) | [範例資料 SQL](../../資料庫/範例資料.sql)
+
+本資料夾逐表說明教室租用系統的 10 張資料表。每份規格均包含：
+
+1. 資料表在系統中的責任與使用情境。
+2. 每個欄位的型態、鍵值、預設值與完整性限制。
+3. 每個型態與限制的選擇理由。
+4. 外鍵方向、關聯基數及其他邏輯規則。
+5. 對應 View 與呼叫方式。
+6. 10 筆擬真範例資料摘要。
+
+## 規格索引
+
+| 編號 | 資料表 | 中文名稱 | 詳細規格 |
+|---:|---|---|---|
+| 01 | `users` | 使用者 | [開啟](01_users.md) |
+| 02 | `classrooms` | 教室 | [開啟](02_classrooms.md) |
+| 03 | `sections` | 節次 | [開啟](03_sections.md) |
+| 04 | `booking_statuses` | 預約狀態 | [開啟](04_booking_statuses.md) |
+| 05 | `course_info` | 課程資訊 | [開啟](05_course_info.md) |
+| 06 | `course_times` | 固定授課時段 | [開啟](06_course_times.md) |
+| 07 | `long_term_bookings` | 週期性借用 | [開啟](07_long_term_bookings.md) |
+| 08 | `bookings` | 單次預約 | [開啟](08_bookings.md) |
+| 09 | `booking_reviews` | 審核歷程 | [開啟](09_booking_reviews.md) |
+| 10 | `notifications` | 通知 | [開啟](10_notifications.md) |
+
+## 完整性分類
+
+| 類型 | 實作方式 |
+|---|---|
+| 實體完整性 | 每張資料表均具有主鍵。 |
+| 參照完整性 | 所有外鍵均參照型態一致的父鍵。 |
+| Domain 完整性 | 使用資料型態、`ENUM`、`CHECK`、`NOT NULL` 與 `DEFAULT`。 |
+| 唯一性 | 使用主鍵與 `UNIQUE`。 |
+| 其他邏輯規則 | 使用 Trigger 驗證角色、資料所有權、教室狀態及時段衝突。 |
+| 存取控制 | 使用 View、MariaDB Role 與欄位級 `GRANT`。 |

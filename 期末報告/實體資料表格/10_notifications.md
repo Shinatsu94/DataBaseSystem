@@ -10,12 +10,12 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `notification_id` | `INT` | 是 | PK | 自動編號 | `PRIMARY KEY AUTO_INCREMENT` | 通知識別碼 |
+| 1 | `notification_id` | `BIGINT UNSIGNED` | 是 | PK | 自動編號 | `PRIMARY KEY AUTO_INCREMENT` | 長期累積的通知識別碼 |
 | 2 | `recipient_id` | `CHAR(8)` | 是 | FK → `users.user_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 收件人 |
-| 3 | `booking_id` | `INT` | 否 | FK → `bookings.booking_id` | `NULL` | 欄位具有值時，外鍵參照必須存在 | 對應預約；一般系統通知允許為空值 |
-| 4 | `message` | `VARCHAR(300)` | 是 | - | 無 | `NOT NULL` | 通知內容 |
-| 5 | `is_read` | `TINYINT(1)` | 是 | - | `0` | `NOT NULL`、`CHECK (is_read IN (0, 1))` | 讀取狀態：`0` 為未讀，`1` 為已讀 |
-| 6 | `created_at` | `DATETIME` | 是 | - | `CURRENT_TIMESTAMP` | `NOT NULL` | 建立時間 |
+| 3 | `booking_id` | `BIGINT UNSIGNED` | 否 | FK → `bookings.booking_id` | `NULL` | 欄位具有值時，外鍵參照必須存在 | 對應預約；一般系統通知允許為空值 |
+| 4 | `message` | `TEXT` | 是 | - | 無 | `NOT NULL` | 長度差異較大的通知內容 |
+| 5 | `is_read` | `BOOLEAN` | 是 | - | `FALSE` | `NOT NULL`、布林值檢查 | `FALSE` 為未讀，`TRUE` 為已讀 |
+| 6 | `created_at` | `TIMESTAMP(6)` | 是 | - | `CURRENT_TIMESTAMP(6)` | `NOT NULL` | 建立事件時間，微秒精度，依連線時區轉換 |
 
 ## 局部實體關聯圖
 
@@ -41,6 +41,17 @@ flowchart LR
 | 規則 | 說明 |
 |---|---|
 | 可選預約 | `booking_id` 允許為空值，以支援不屬於特定預約之一般系統通知。 |
-| 讀取狀態 | `is_read` 只能為 `0` 或 `1`，預設值為 `0`。 |
-| 建立時間 | `created_at` 預設為新增通知時的 `CURRENT_TIMESTAMP`。 |
+| 讀取狀態 | `is_read` 使用 `BOOLEAN`，預設為 `FALSE`。 |
+| 建立時間 | `created_at` 預設為新增通知時的 `CURRENT_TIMESTAMP(6)`。 |
 | 查詢索引 | `idx_notifications_recipient_read` 可加速查詢指定使用者的未讀通知。 |
+
+## Domain、時間型別與對應 View
+
+通知內容使用 `TEXT`；讀取狀態使用 `BOOLEAN`；建立時間使用可依時區轉換的微秒級 `TIMESTAMP(6)`。
+
+```sql
+SELECT * FROM vw_notifications ORDER BY created_at DESC;
+SHOW CREATE VIEW vw_notifications;
+```
+
+一般使用者僅能看見自己的通知，且只獲授權修改 `is_read`；管理員可管理全部。

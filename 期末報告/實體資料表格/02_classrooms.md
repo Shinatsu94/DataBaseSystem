@@ -10,10 +10,10 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `classroom_id` | `VARCHAR(10)` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 教室識別碼，例如 `B205` |
-| 2 | `classroom_name` | `VARCHAR(50)` | 是 | - | 無 | `NOT NULL` | 教室顯示名稱 |
-| 3 | `capacity` | `INT` | 是 | - | 無 | `NOT NULL`、`CHECK (capacity > 0)` | 可容納人數，必須大於 0 |
-| 4 | `is_active` | `TINYINT(1)` | 是 | - | `1` | `NOT NULL`、`CHECK (is_active IN (0, 1))` | 是否開放使用：`1` 為啟用，`0` 為停用 |
+| 1 | `classroom_id` | `CHAR(10)` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 制度化教室代碼，例如 `B205` |
+| 2 | `classroom_name` | `VARCHAR(80)` | 是 | - | 無 | `NOT NULL` | 長度可變的教室顯示名稱 |
+| 3 | `capacity` | `SMALLINT UNSIGNED` | 是 | - | 無 | `NOT NULL`、`CHECK (capacity > 0)` | 非負且大於 0 的可容納人數 |
+| 4 | `is_active` | `BOOLEAN` | 是 | - | `TRUE` | `NOT NULL`、布林值檢查 | 是否開放使用 |
 
 ## 局部實體關聯圖
 
@@ -43,5 +43,16 @@ flowchart LR
 |---|---|
 | 容量限制 | `capacity` 必須大於 0。 |
 | 啟用狀態 | `is_active` 只能為 `0` 或 `1`，預設值為 `1`。 |
-| 停用教室 | 停用教室不得接受新預約。此條件應由應用程式層於新增申請前執行驗證。 |
+| 停用教室 | `bookings` Trigger 會拒絕對停用教室新增或維持待審核、已核准預約。 |
 | 時段衝突 | 固定課表與已核准預約之重疊驗證由 `course_times` 與 `bookings` 的觸發器執行。 |
+
+## Domain 與對應 View
+
+教室代碼使用 `CHAR(10)`；容量使用無號小整數；啟用狀態使用 `BOOLEAN`。只有名稱長度會依教室而改變，因此使用 `VARCHAR(80)`。
+
+```sql
+SELECT * FROM vw_classrooms;
+SHOW CREATE VIEW vw_classrooms;
+```
+
+一般使用者只會取得 `is_active = TRUE` 的教室，管理員可取得全部。

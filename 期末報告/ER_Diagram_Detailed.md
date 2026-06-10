@@ -8,25 +8,25 @@
 
 ```mermaid
 flowchart LR
-    users["<b>users 使用者</b><br/>PK user_id : CHAR(8)<br/>username : VARCHAR(30)<br/>UK email : VARCHAR(100)<br/>role : VARCHAR(10)<br/>department : VARCHAR(50), NULL"]
+    users["<b>users 使用者</b><br/>PK user_id : CHAR(8)<br/>username : VARCHAR(60)<br/>UK email : VARCHAR(254)<br/>role : ENUM<br/>department : VARCHAR(80), NULL"]
 
-    classrooms["<b>classrooms 教室</b><br/>PK classroom_id : VARCHAR(10)<br/>classroom_name : VARCHAR(50)<br/>capacity : INT<br/>is_active : TINYINT(1)"]
+    classrooms["<b>classrooms 教室</b><br/>PK classroom_id : CHAR(10)<br/>classroom_name : VARCHAR(80)<br/>capacity : SMALLINT UNSIGNED<br/>is_active : BOOLEAN"]
 
-    sections["<b>sections 節次</b><br/>PK section_id : INT<br/>UK section_name : VARCHAR(20)<br/>start_time : TIME<br/>end_time : TIME"]
+    sections["<b>sections 節次</b><br/>PK section_id : TINYINT UNSIGNED<br/>UK section_name : CHAR(20)<br/>start_time : TIME(0)<br/>end_time : TIME(0)"]
 
-    statuses["<b>booking_statuses 審核狀態</b><br/>PK status_id : INT<br/>UK status_code : VARCHAR(10)<br/>status_name : VARCHAR(20)"]
+    statuses["<b>booking_statuses 審核狀態</b><br/>PK status_id : TINYINT UNSIGNED<br/>UK status_code : ENUM<br/>status_name : CHAR(20)"]
 
-    course_info["<b>course_info 課程資訊</b><br/>PK course_id : VARCHAR(20)<br/>academic_year : INT<br/>semester : INT<br/>course_name : VARCHAR(100)<br/>FK teacher_id : CHAR(8)"]
+    course_info["<b>course_info 課程資訊</b><br/>PK course_id : CHAR(20)<br/>academic_year : SMALLINT UNSIGNED<br/>semester : TINYINT UNSIGNED<br/>course_name : VARCHAR(120)<br/>FK teacher_id : CHAR(8)"]
 
-    course_times["<b>course_times 固定授課時間</b><br/>PK course_time_id : INT<br/>FK course_id : VARCHAR(20)<br/>FK classroom_id : VARCHAR(10)<br/>day_of_week : INT<br/>FK start_section_id : INT<br/>FK end_section_id : INT"]
+    course_times["<b>course_times 固定授課時間</b><br/>PK course_time_id : BIGINT UNSIGNED<br/>FK course_id : CHAR(20)<br/>FK classroom_id : CHAR(10)<br/>day_of_week : TINYINT UNSIGNED<br/>FK start_section_id : TINYINT UNSIGNED<br/>FK end_section_id : TINYINT UNSIGNED"]
 
-    long_term["<b>long_term_bookings 長期借用</b><br/>PK long_term_id : INT<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>start_date : DATE<br/>end_date : DATE<br/>day_of_week : INT<br/>FK start_section_id : INT<br/>FK end_section_id : INT<br/>reason : VARCHAR(200)<br/>FK status_id : INT<br/>created_at : DATETIME"]
+    long_term["<b>long_term_bookings 長期借用</b><br/>PK long_term_id : BIGINT UNSIGNED<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : CHAR(10)<br/>start_date : DATE<br/>end_date : DATE<br/>day_of_week : TINYINT UNSIGNED<br/>FK start_section_id : TINYINT UNSIGNED<br/>FK end_section_id : TINYINT UNSIGNED<br/>reason : TEXT<br/>FK status_id : TINYINT UNSIGNED<br/>created_at : TIMESTAMP(6)"]
 
-    bookings["<b>bookings 單次預約</b><br/>PK booking_id : INT<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : VARCHAR(10)<br/>FK long_term_id : INT, NULL<br/>FK course_time_id : INT, NULL<br/>booking_date : DATE<br/>FK start_section_id : INT<br/>FK end_section_id : INT<br/>reason : VARCHAR(200)<br/>FK status_id : INT<br/>created_at : DATETIME"]
+    bookings["<b>bookings 單次預約</b><br/>PK booking_id : BIGINT UNSIGNED<br/>FK applicant_id : CHAR(8)<br/>FK classroom_id : CHAR(10)<br/>FK long_term_id : BIGINT UNSIGNED, NULL<br/>FK course_time_id : BIGINT UNSIGNED, NULL<br/>booking_date : DATE<br/>FK start_section_id : TINYINT UNSIGNED<br/>FK end_section_id : TINYINT UNSIGNED<br/>reason : TEXT<br/>FK status_id : TINYINT UNSIGNED<br/>created_at : TIMESTAMP(6)"]
 
-    reviews["<b>booking_reviews 審核歷程</b><br/>PK review_id : INT<br/>FK booking_id : INT<br/>FK reviewer_id : CHAR(8)<br/>FK status_id : INT<br/>comment : VARCHAR(300), NULL<br/>reviewed_at : DATETIME"]
+    reviews["<b>booking_reviews 審核歷程</b><br/>PK review_id : BIGINT UNSIGNED<br/>FK booking_id : BIGINT UNSIGNED<br/>FK reviewer_id : CHAR(8)<br/>FK status_id : TINYINT UNSIGNED<br/>comment : TEXT, NULL<br/>reviewed_at : TIMESTAMP(6)"]
 
-    notifications["<b>notifications 通知</b><br/>PK notification_id : INT<br/>FK recipient_id : CHAR(8)<br/>FK booking_id : INT, NULL<br/>message : VARCHAR(300)<br/>is_read : TINYINT(1)<br/>created_at : DATETIME"]
+    notifications["<b>notifications 通知</b><br/>PK notification_id : BIGINT UNSIGNED<br/>FK recipient_id : CHAR(8)<br/>FK booking_id : BIGINT UNSIGNED, NULL<br/>message : TEXT<br/>is_read : BOOLEAN<br/>created_at : TIMESTAMP(6)"]
 
     users -->|"1 : N<br/>teacher_id 教授"| course_info
     users -->|"1 : N<br/>applicant_id 提出長期借用"| long_term

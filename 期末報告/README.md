@@ -1,6 +1,6 @@
 # 教室租用系統資料庫設計
 
-本目錄為教室租用系統之完整資料庫設計報告。內容依一般 GitHub 專案文件慣例，整合系統需求、實體關聯圖、Schema 架構、完整性限制、SQL 範例、測試結果與可編輯附件，不再依作業階段分割。
+本目錄為教室租用系統之完整資料庫設計報告。內容整合系統需求、實體關聯圖、MariaDB Schema、學生／教師／管理員權限、10 個 View、Domain 與時間型別、完整性限制、SQL 範例及測試結果。
 
 完整文件入口位於 [`專案總覽.md`](./專案總覽.md)，可逐層點選各項設計文件與 10 份實體說明。
 
@@ -109,7 +109,7 @@ flowchart LR
 
 ## 資料庫設計摘要
 
-本系統使用 MariaDB，資料表採用 `InnoDB` 儲存引擎與 `utf8mb4` 字元集。Schema 共包含 10 個資料表：
+本系統使用 MariaDB，資料表採用 `InnoDB` 儲存引擎與 `utf8mb4` 字元集。Schema 包含 10 個資料表、10 個 View、10 個 Trigger 及 3 個 MariaDB Role。
 
 | 資料表 | 用途 |
 |---|---|
@@ -127,6 +127,9 @@ flowchart LR
 完整 SQL Schema 與設計依據：
 
 - [`schema.sql`](./schema.sql)：可執行之 MariaDB 建表語法。
+- [`views.sql`](./views.sql)：10 個 View 的獨立建立語法與呼叫範例。
+- [`security.sql`](./security.sql)：學生、教師及管理員角色與授權語法。
+- [`權限與View設計.md`](./權限與View設計.md)：權限驗證、View 範圍、Domain 及日期時間精度。
 - [`Schema_設計說明.md`](./Schema_設計說明.md)：設計方法、架構依據、限制條件、觸發器、索引與 SQL 範例。
 
 ## 完整性限制
@@ -146,6 +149,7 @@ flowchart LR
 mariadb -u root -p -e "CREATE DATABASE IF NOT EXISTS classroom_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mariadb -u root -p classroom_rental < schema.sql
 mariadb -u root -p classroom_rental < examples.sql
+mariadb -u root -p classroom_rental < security.sql
 ```
 
 `schema.sql` 內的資料表均明確指定 `ENGINE=InnoDB`。MariaDB 會在資料異動時檢查外鍵參照完整性。
@@ -161,6 +165,10 @@ mariadb -u root -p classroom_rental < examples.sql
 | 已核准預約與既有固定課表重疊 | 拒絕 |
 | 同一教室之已核准預約重疊 | 拒絕 |
 | 同一時段存在多筆待審核申請 | 接受，核准時再次驗證 |
+| 學生直接查詢基礎資料表 | 拒絕 |
+| 學生透過 View 查詢其他使用者資料 | 不顯示 |
+| 教師查詢課程並建立自己的長期借用 | 接受 |
+| 管理員查詢及維護全部資料 | 接受 |
 
 完整測試內容位於 [`驗證說明.md`](./驗證說明.md)。
 
@@ -170,7 +178,10 @@ mariadb -u root -p classroom_rental < examples.sql
 |---|---|
 | [`專案總覽.md`](./專案總覽.md) | 彙整專案目標、需求、資料庫方法、完整性限制、各實體、關聯、觸發器、索引、驗證、擴充項目與可點選導覽。 |
 | [`Schema_設計說明.md`](./Schema_設計說明.md) | 獨立說明 SQL Schema 架構、方法、依據與實際範例。 |
-| [`schema.sql`](./schema.sql) | 建立資料表、外鍵、檢查限制、索引與觸發器。 |
+| [`權限與View設計.md`](./權限與View設計.md) | 說明三種角色、權限驗證、10 個 View、Domain 與日期時間型別。 |
+| [`schema.sql`](./schema.sql) | 建立資料表、外鍵、檢查限制、索引、觸發器與 View。 |
+| [`views.sql`](./views.sql) | 獨立建立或重建 10 個 View。 |
+| [`security.sql`](./security.sql) | 建立 MariaDB Role、角色繼承與資料庫授權。 |
 | [`examples.sql`](./examples.sql) | 建立示範資料、執行查詢並提供可取消註解之衝突測試。 |
 | [`驗證說明.md`](./驗證說明.md) | 說明已執行之正確資料與錯誤資料測試。 |
 | [`ER_Diagram.md`](./ER_Diagram.md) | 適合 GitHub 首頁與簡報使用之精簡 Mermaid 關聯圖。 |

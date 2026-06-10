@@ -1,6 +1,6 @@
 # 教室租用系統：SQL Schema 設計說明
 
-本文件獨立說明 [`schema.sql`](./schema.sql) 的架構方法、設計依據、完整性限制、觸發器、索引與實際 SQL 範例。Schema 適用於 MariaDB。
+本文件獨立說明 [`schema.sql`](./schema.sql) 的架構方法、設計依據、完整性限制、觸發器、索引與實際 SQL 範例。角色、10 個 View、Domain 與時間精度詳見 [`權限與View設計.md`](./權限與View設計.md)。
 
 ## 目錄
 
@@ -8,6 +8,7 @@
 - [設計方法](#設計方法)
 - [設計依據](#設計依據)
 - [資料表架構](#資料表架構)
+- [Domain 與時間型別](#domain-與時間型別)
 - [完整性限制](#完整性限制)
 - [觸發器設計](#觸發器設計)
 - [索引設計](#索引設計)
@@ -44,7 +45,9 @@
 | `DEFAULT CHARSET=utf8mb4` | 完整保存繁體中文與其他 Unicode 文字。 |
 | `COLLATE=utf8mb4_unicode_ci` | 提供一般文字欄位之 Unicode 比對規則。 |
 | `AUTO_INCREMENT` | 為交易資料表產生自動遞增識別碼。 |
-| `TIME` | 保存節次起訖時間，避免以一般文字欄位處理時間。 |
+| `TIME(0)` | 保存不含日期與時區的秒級節次時刻。 |
+| `DATE` | 保存只含年月日、不可受時區轉換影響的借用日期。 |
+| `TIMESTAMP(6)` | 保存建立、審核及通知等事件瞬間，保留微秒並支援連線時區轉換。 |
 | `SIGNAL SQLSTATE '45000'` | 由觸發器阻擋違反時段衝突規則之異動。 |
 
 ## 設計依據
@@ -85,6 +88,20 @@
 | 稽核資料 | `booking_reviews` | 管理員審核歷程 |
 | 通知資料 | `notifications` | 通知內容與讀取狀態 |
 
+## Domain 與時間型別
+
+固定識別碼使用 `CHAR`，封閉角色與狀態使用 `ENUM`，小範圍非負值使用 `TINYINT UNSIGNED` 或 `SMALLINT UNSIGNED`，交易主鍵使用 `BIGINT UNSIGNED`，長篇敘述使用 `TEXT`。`VARCHAR` 僅保留給姓名、電子郵件、系所、教室名稱與課程名稱等真正可變長度文字。
+
+時間資料依語意分為：
+
+| 類型 | 欄位 | 語意 |
+|---|---|---|
+| `TIME(0)` | `sections.start_time`、`sections.end_time` | 每日鐘面時刻，秒級，不含日期與時區 |
+| `DATE` | `start_date`、`end_date`、`booking_date` | 日曆日期，只含 `YYYY-MM-DD` |
+| `TIMESTAMP(6)` | `created_at`、`reviewed_at` | 事件瞬間，微秒級，依連線時區轉換 |
+
+`academic_year` 保存民國學年度，例如 `114`，並非西元年份，因此不使用 MariaDB `YEAR`。
+
 ## 完整性限制
 
 ### 實體完整性
@@ -93,9 +110,11 @@
 
 ```sql
 CREATE TABLE classrooms (
-  classroom_id VARCHAR(10) PRIMARY KEY,
-  classroom_name VARCHAR(50) NOT NULL,
-  capacity INT NOT NULL
+  classroom_id CHAR(10) PRIMARY KEY,
+  classroom_name VARCHAR(80) NOT NULL,
+  capacity SMALLINT UNSIGNED NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  CHECK (capacity > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -115,8 +134,6 @@ FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id)
 Schema 使用 `CHECK` 限制合法值：
 
 ```sql
-CHECK (role IN ('student', 'teacher', 'admin'))
-CHECK (status_code IN ('pending', 'approved', 'rejected', 'canceled'))
 CHECK (capacity > 0)
 CHECK (day_of_week BETWEEN 1 AND 7)
 CHECK (start_section_id <= end_section_id)
@@ -134,14 +151,20 @@ CHECK (start_section_id <= end_section_id)
 
 ## 觸發器設計
 
-跨資料表之時段衝突無法僅使用 `CHECK` 完成，因此使用 Trigger。
+跨資料表之角色、權限與時段衝突無法僅使用 `CHECK` 完成，因此使用 10 個 Trigger。
 
 | 觸發器 | 執行時機 | 用途 |
 |---|---|---|
+| `trg_course_info_validate_teacher_insert` | 新增課程前 | 強制授課者為教師，並限制教師只能建立自己的課程。 |
+| `trg_course_info_validate_teacher_update` | 修改課程前 | 維持授課教師角色與資料所有權。 |
 | `trg_course_times_prevent_overlap_insert` | 新增固定課表前 | 防止固定課表互相重疊，並防止與已核准預約重疊。 |
 | `trg_course_times_prevent_overlap_update` | 修改固定課表前 | 防止修改後之固定課表發生衝突。 |
+| `trg_long_term_validate_insert` | 新增長期借用前 | 僅允許教師建立自己的待審核案件。 |
+| `trg_long_term_validate_update` | 修改長期借用前 | 僅允許教師修改或取消自己的待審核案件。 |
 | `trg_bookings_prevent_overlap_insert` | 新增已核准預約前 | 防止已核准預約與固定課表或其他已核准預約重疊。 |
 | `trg_bookings_prevent_overlap_update` | 修改為已核准預約前 | 防止審核或異動後之預約發生衝突。 |
+| `trg_reviews_validate_insert` | 新增審核歷程前 | 強制審核人員為管理員。 |
+| `trg_reviews_validate_update` | 修改審核歷程前 | 維持審核人員的管理員角色。 |
 
 節次重疊判斷條件如下：
 
@@ -169,6 +192,7 @@ MariaDB 的 `WEEKDAY(date) + 1` 會將星期一至星期日轉換為 `1` 至 `7`
 mariadb -u root -p -e "CREATE DATABASE IF NOT EXISTS classroom_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mariadb -u root -p classroom_rental < schema.sql
 mariadb -u root -p classroom_rental < examples.sql
+mariadb -u root -p classroom_rental < security.sql
 ```
 
 ## MariaDB 官方文件依據
@@ -178,6 +202,11 @@ mariadb -u root -p classroom_rental < examples.sql
 - [`CREATE TRIGGER`](https://mariadb.com/docs/server/server-usage/triggers-events/triggers/create-trigger)
 - [`SIGNAL`](https://mariadb.com/kb/en/signal/)
 - [`WEEKDAY`](https://mariadb.com/docs/server/reference/sql-functions/date-time-functions/weekday)
+- [`CREATE VIEW`](https://mariadb.com/docs/server/server-usage/views/create-view)
+- [`Roles Overview`](https://mariadb.com/docs/server/security/user-account-management/roles/roles_overview)
+- [`DATE`](https://mariadb.com/docs/server/reference/data-types/date-and-time-data-types/date)
+- [`TIME`](https://mariadb.com/docs/server/reference/data-types/date-and-time-data-types/time)
+- [`TIMESTAMP`](https://mariadb.com/docs/server/reference/data-types/date-and-time-data-types/timestamp)
 
 ## SQL 範例
 

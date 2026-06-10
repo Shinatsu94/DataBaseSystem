@@ -10,9 +10,9 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `status_id` | `INT` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 狀態識別碼 |
-| 2 | `status_code` | `VARCHAR(10)` | 是 | UK | 無 | `NOT NULL`、`UNIQUE`、`CHECK (status_code IN ('pending', 'approved', 'rejected', 'canceled'))` | 程式使用的狀態代碼 |
-| 3 | `status_name` | `VARCHAR(20)` | 是 | - | 無 | `NOT NULL` | 顯示名稱，例如待審核、已核准 |
+| 1 | `status_id` | `TINYINT UNSIGNED` | 是 | PK | 無 | 主鍵不可重複、不可為空值 | 小範圍非負狀態識別碼 |
+| 2 | `status_code` | `ENUM('pending','approved','rejected','canceled')` | 是 | UK | 無 | `NOT NULL`、`UNIQUE` | 程式使用的封閉狀態代碼 |
+| 3 | `status_name` | `CHAR(20)` | 是 | - | 無 | `NOT NULL` | 制度化顯示名稱，例如待審核、已核准 |
 
 ## 局部實體關聯圖
 
@@ -45,4 +45,13 @@ flowchart LR
 | `rejected` | 已拒絕 | 否 | 不占用教室 |
 | `canceled` | 已取消 | 否 | 不占用教室 |
 
-`status_code` 使用 `UNIQUE` 與 `CHECK`，只能保存以上四種狀態代碼。
+`status_code` 使用 `ENUM` 與 `UNIQUE`，只能保存以上四種狀態代碼。
+
+## Domain 與對應 View
+
+狀態數量有限，因此主鍵使用 `TINYINT UNSIGNED`；機器代碼使用 `ENUM`，不以一般文字欄位接受任意值。
+
+```sql
+SELECT * FROM vw_booking_statuses ORDER BY status_id;
+SHOW CREATE VIEW vw_booking_statuses;
+```

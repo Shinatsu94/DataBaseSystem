@@ -10,17 +10,17 @@
 
 | 編號 | 欄位名稱 | 資料型別 | 必填 | 鍵值或參照 | 預設值 | 完整性限制 | 說明 |
 |---|---|---|---|---|---|---|---|
-| 1 | `long_term_id` | `INT` | 是 | PK | 自動編號 | `PRIMARY KEY AUTO_INCREMENT` | 長期借用識別碼 |
+| 1 | `long_term_id` | `BIGINT UNSIGNED` | 是 | PK | 自動編號 | `PRIMARY KEY AUTO_INCREMENT` | 長期累積的長期借用識別碼 |
 | 2 | `applicant_id` | `CHAR(8)` | 是 | FK → `users.user_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 申請人 |
-| 3 | `classroom_id` | `VARCHAR(10)` | 是 | FK → `classrooms.classroom_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 借用教室 |
-| 4 | `start_date` | `DATE` | 是 | - | 無 | `NOT NULL` | 借用開始日期 |
-| 5 | `end_date` | `DATE` | 是 | - | 無 | `NOT NULL`、`CHECK (start_date <= end_date)` | 借用結束日期，不可早於開始日期 |
-| 6 | `day_of_week` | `INT` | 是 | - | 無 | `NOT NULL`、`CHECK (day_of_week BETWEEN 1 AND 7)` | 每週借用日：`1` 為星期一，`7` 為星期日 |
-| 7 | `start_section_id` | `INT` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 開始節次 |
-| 8 | `end_section_id` | `INT` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在、`CHECK (start_section_id <= end_section_id)` | 結束節次 |
-| 9 | `reason` | `VARCHAR(200)` | 是 | - | 無 | `NOT NULL` | 借用原因 |
-| 10 | `status_id` | `INT` | 是 | FK → `booking_statuses.status_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 目前狀態 |
-| 11 | `created_at` | `DATETIME` | 是 | - | `CURRENT_TIMESTAMP` | `NOT NULL` | 建立時間 |
+| 3 | `classroom_id` | `CHAR(10)` | 是 | FK → `classrooms.classroom_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 借用教室 |
+| 4 | `start_date` | `DATE` | 是 | - | 無 | `NOT NULL` | 第一個日曆日期，格式 `YYYY-MM-DD`，不含時刻與時區 |
+| 5 | `end_date` | `DATE` | 是 | - | 無 | `NOT NULL`、`CHECK (start_date <= end_date)` | 最後一個日曆日期，不含時刻與時區 |
+| 6 | `day_of_week` | `TINYINT UNSIGNED` | 是 | - | 無 | `NOT NULL`、`CHECK (day_of_week BETWEEN 1 AND 7)` | 每週借用日：`1` 為星期一，`7` 為星期日 |
+| 7 | `start_section_id` | `TINYINT UNSIGNED` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 開始節次 |
+| 8 | `end_section_id` | `TINYINT UNSIGNED` | 是 | FK → `sections.section_id` | 無 | `NOT NULL`、外鍵參照必須存在、`CHECK (start_section_id <= end_section_id)` | 結束節次 |
+| 9 | `reason` | `TEXT` | 是 | - | 無 | `NOT NULL` | 長度差異較大的借用原因 |
+| 10 | `status_id` | `TINYINT UNSIGNED` | 是 | FK → `booking_statuses.status_id` | 無 | `NOT NULL`、外鍵參照必須存在 | 目前狀態 |
+| 11 | `created_at` | `TIMESTAMP(6)` | 是 | - | `CURRENT_TIMESTAMP(6)` | `NOT NULL` | 建立事件時間，微秒精度，依連線時區轉換 |
 
 ## 局部實體關聯圖
 
@@ -44,7 +44,7 @@ flowchart LR
 
 | 關聯實體 | 關聯類型 | 本實體外鍵或對方外鍵 | 說明 | 使用範例 |
 |---|---|---|---|---|
-| `users` | `users` 1:N `long_term_bookings` | `applicant_id` → `users.user_id` | 每筆長期借用由一位使用者提出 | 學生 `41243149` 提出學期內每週會議借用。 |
+| `users` | `users` 1:N `long_term_bookings` | `applicant_id` → `users.user_id` | 每筆長期借用由一位教師提出 | 教師 `T0000001` 提出學期內每週會議借用。 |
 | `classrooms` | `classrooms` 1:N `long_term_bookings` | `classroom_id` → `classrooms.classroom_id` | 每筆長期借用指定一間教室 | 每週會議固定借用 `B205`。 |
 | `sections` | `sections` 1:N `long_term_bookings` | `start_section_id`、`end_section_id` → `sections.section_id` | 每筆長期借用指定開始與結束節次 | 每週會議固定使用第 5 至第 6 節。 |
 | `booking_statuses` | `booking_statuses` 1:N `long_term_bookings` | `status_id` → `booking_statuses.status_id` | 每筆長期借用保存目前狀態 | 新申請先保存為 `pending`，核准後改為 `approved`。 |
@@ -59,3 +59,15 @@ flowchart LR
 | 節次範圍 | `start_section_id` 不可大於 `end_section_id`。 |
 | 展開規則 | 系統應依日期範圍與星期設定，將長期借用展開為多筆 `bookings`，讓每個實際日期都能接受衝突檢查。 |
 | 衝突處理 | 展開後的每筆 `bookings` 在核准時都會依單次預約規則接受衝突檢查。 |
+| 權限規則 | 學生不得建立長期借用；教師只能建立自己的 `pending` 案件並可取消；管理員可管理全部。 |
+
+## Domain、時間型別與對應 View
+
+日期範圍採 `DATE`，只保存校曆上的年月日，不含鐘面時間及時區。建立時間採 `TIMESTAMP(6)`，保存事件瞬間並由 MariaDB 依連線時區與 UTC 互相轉換。原因長度不固定，使用 `TEXT`。
+
+```sql
+SELECT * FROM vw_long_term_bookings ORDER BY created_at DESC;
+SHOW CREATE VIEW vw_long_term_bookings;
+```
+
+教師僅能看見及維護自己的資料，管理員可處理全部資料。

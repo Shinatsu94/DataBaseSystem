@@ -1,5 +1,6 @@
 -- 教室租用系統：MariaDB 範例資料與查詢
--- 先執行 schema.sql，再執行本檔案。
+-- 先執行 schema.sql，再執行本檔案，最後以 security.sql 建立正式權限。
+-- 本連線使用 Asia/Taipei 的 UTC+08:00 顯示 TIMESTAMP(6)。
 --
 -- 檔案內容：
 -- 1. 建立預約狀態、使用者、教室、節次與固定課表。
@@ -8,6 +9,7 @@
 -- 4. 提供可取消註解之衝突測試 SQL。
 
 SET NAMES utf8mb4;
+SET time_zone = '+08:00';
 
 INSERT INTO booking_statuses(status_id, status_code, status_name) VALUES
   (1, 'pending',  '待審核'),
@@ -43,7 +45,7 @@ INSERT INTO bookings(
   applicant_id, classroom_id, booking_date,
   start_section_id, end_section_id, reason, status_id
 ) VALUES (
-  '41243149', 'B205', '2026-06-08',
+  '41243149', 'B205', DATE '2026-06-08',
   5, 6, '專題小組定期會議', 1
 );
 
@@ -71,7 +73,7 @@ JOIN users AS u ON u.user_id = b.applicant_id
 JOIN sections AS s1 ON s1.section_id = b.start_section_id
 JOIN sections AS s2 ON s2.section_id = b.end_section_id
 JOIN booking_statuses AS bs ON bs.status_id = b.status_id
-WHERE b.booking_date = '2026-06-08'
+WHERE b.booking_date = DATE '2026-06-08'
   AND bs.status_code = 'approved'
 ORDER BY c.classroom_id, b.start_section_id;
 
@@ -85,12 +87,25 @@ WHERE n.recipient_id = '41243149'
   AND n.is_read = 0
 ORDER BY n.created_at DESC;
 
+-- 角色帳號完成 security.sql 設定後，可使用以下 View。
+-- SELECT * FROM vw_users;
+-- SELECT * FROM vw_classrooms;
+-- SELECT * FROM vw_sections ORDER BY section_id;
+-- SELECT * FROM vw_booking_statuses ORDER BY status_id;
+-- SELECT * FROM vw_course_info;
+-- SELECT * FROM vw_course_times;
+-- SELECT * FROM vw_long_term_bookings ORDER BY created_at DESC;
+-- SELECT * FROM vw_bookings ORDER BY created_at DESC;
+-- SELECT * FROM vw_booking_reviews ORDER BY reviewed_at DESC;
+-- SELECT * FROM vw_notifications ORDER BY created_at DESC;
+-- SHOW CREATE VIEW vw_bookings;
+
 -- 衝突測試：取消註解後應失敗，因 B205 在 2026-06-08 第 6 節已被核准借用。
 -- INSERT INTO bookings(
 --   applicant_id, classroom_id, booking_date,
 --   start_section_id, end_section_id, reason, status_id
 -- ) VALUES (
---   'T0000001', 'B205', '2026-06-08',
+--   'T0000001', 'B205', DATE '2026-06-08',
 --   6, 6, '衝突測試', 2
 -- );
 
@@ -99,6 +114,6 @@ ORDER BY n.created_at DESC;
 --   applicant_id, classroom_id, booking_date,
 --   start_section_id, end_section_id, reason, status_id
 -- ) VALUES (
---   '41243149', 'A101', '2026-06-09',
+--   '41243149', 'A101', DATE '2026-06-09',
 --   3, 3, '固定課表衝突測試', 2
 -- );

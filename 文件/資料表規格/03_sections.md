@@ -25,6 +25,22 @@
 
 `course_times`、`long_term_bookings`、`bookings` 均以 `start_section_id` 與 `end_section_id` 參照本表。每一個節次可被多筆課表或預約使用，因此關聯為 `1:N`。
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    sections["sections<br/>節次<br/>PK section_id"]
+    course_times["course_times<br/>固定授課時段"]
+    long_term["long_term_bookings<br/>週期性借用"]
+    bookings["bookings<br/>單次預約"]
+
+    sections -->|"1 : N × 2<br/>start_section_id、end_section_id"| course_times
+    sections -->|"1 : N × 2<br/>start_section_id、end_section_id"| long_term
+    sections -->|"1 : N × 2<br/>start_section_id、end_section_id"| bookings
+```
+
+每個子實體都以兩個必填外鍵參照 `sections`，分別表示開始節次與結束節次。
+
 ## 其他邏輯規則
 
 1. `start_time` 必須早於 `end_time`。

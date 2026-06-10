@@ -36,6 +36,26 @@ CHECK (user_id REGEXP '^([0-9]{8}|T[0-9]{7}|A[0-9]{7})$')
 | `booking_reviews` | `reviewer_id` | `1:N` | 一位管理員可建立多筆審核歷程。 |
 | `notifications` | `recipient_id` | `1:N` | 一位使用者可收到多則通知。 |
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    users["users<br/>使用者<br/>PK user_id"]
+    course_info["course_info<br/>課程資訊"]
+    long_term["long_term_bookings<br/>週期性借用"]
+    bookings["bookings<br/>單次預約"]
+    reviews["booking_reviews<br/>審核歷程"]
+    notifications["notifications<br/>通知"]
+
+    users -->|"1 : N<br/>teacher_id 授課教師"| course_info
+    users -->|"1 : N<br/>applicant_id 週期申請人"| long_term
+    users -->|"1 : N<br/>applicant_id 單次申請人"| bookings
+    users -->|"1 : N<br/>reviewer_id 審核人"| reviews
+    users -->|"1 : N<br/>recipient_id 收件人"| notifications
+```
+
+所有連線均為必填外鍵關聯；角色是否符合教師或管理員身分，另由 Trigger 驗證。
+
 ## 其他邏輯規則
 
 1. `course_info.teacher_id` 必須參照 `role = 'teacher'` 的使用者。

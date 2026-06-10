@@ -25,6 +25,8 @@
 | `users` | `1:N` | `reviewer_id` | 一位管理員可執行多次審核；每筆審核只能由一位管理員執行。 |
 | `booking_statuses` | `1:N` | `status_id` | 一種狀態可被多筆審核採用；每筆審核只保存一個決策狀態。 |
 
+## 局部實體關聯圖
+
 ```mermaid
 flowchart LR
     bookings["bookings<br/>單次預約"]
@@ -36,6 +38,8 @@ flowchart LR
     users -->|"1 : N<br/>reviewer_id"| reviews
     statuses -->|"1 : N<br/>status_id"| reviews
 ```
+
+三條連線均為必填外鍵；`reviewer_id` 還必須通過管理員角色驗證。
 
 ## 其他邏輯規則
 

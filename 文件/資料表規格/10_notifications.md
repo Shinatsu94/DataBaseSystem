@@ -24,6 +24,8 @@
 | `users` | `1:N` | 是 | 一位使用者可收到多筆通知；每筆通知必須具有一位收件人。 |
 | `bookings` | `1:N` | 否 | 一筆預約可產生多筆通知；一般公告可不參照預約。 |
 
+## 局部實體關聯圖
+
 ```mermaid
 flowchart LR
     users["users<br/>使用者"]
@@ -33,6 +35,8 @@ flowchart LR
     users -->|"1 : N<br/>recipient_id"| notifications
     bookings -.->|"1 : N<br/>booking_id 可選參照"| notifications
 ```
+
+收件人關聯為必填外鍵；預約關聯使用虛線，表示一般系統公告可不參照單次預約。
 
 ## 其他邏輯規則
 

@@ -30,6 +30,26 @@
 - `booking_statuses 1:N long_term_bookings`
 - `long_term_bookings 1:N bookings`
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    users["users<br/>使用者"]
+    classrooms["classrooms<br/>教室"]
+    sections["sections<br/>節次"]
+    statuses["booking_statuses<br/>預約狀態"]
+    long_term["long_term_bookings<br/>週期性借用<br/>PK long_term_id"]
+    bookings["bookings<br/>單次預約"]
+
+    users -->|"1 : N<br/>applicant_id 必填"| long_term
+    classrooms -->|"1 : N<br/>classroom_id 必填"| long_term
+    sections -->|"1 : N × 2<br/>起訖節次必填"| long_term
+    statuses -->|"1 : N<br/>status_id 必填"| long_term
+    long_term -.->|"1 : N<br/>long_term_id 可選參照"| bookings
+```
+
+四條實線為週期性借用的必填外鍵；通往 `bookings` 的虛線表示一般單次預約不需要週期性來源。
+
 ## 其他邏輯規則
 
 1. 學生不能建立週期性借用。

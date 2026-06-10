@@ -26,6 +26,22 @@
 | `bookings` | `status_id` | `1:N` |
 | `booking_reviews` | `status_id` | `1:N` |
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    statuses["booking_statuses<br/>預約狀態<br/>PK status_id"]
+    long_term["long_term_bookings<br/>週期性借用"]
+    bookings["bookings<br/>單次預約"]
+    reviews["booking_reviews<br/>審核歷程"]
+
+    statuses -->|"1 : N<br/>status_id 現行狀態"| long_term
+    statuses -->|"1 : N<br/>status_id 現行狀態"| bookings
+    statuses -->|"1 : N<br/>status_id 審核決策"| reviews
+```
+
+所有連線均為必填外鍵。交易資料保存現行狀態，`booking_reviews` 則保存每次審核決策的歷程狀態。
+
 ## 其他邏輯規則
 
 1. `approved` 表示教室已被占用，寫入時必須執行衝突檢查。

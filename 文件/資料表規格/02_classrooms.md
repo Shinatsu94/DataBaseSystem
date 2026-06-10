@@ -23,6 +23,22 @@
 | `long_term_bookings` | `classroom_id` | `1:N` | 一間教室可具有多筆週期性借用規則。 |
 | `bookings` | `classroom_id` | `1:N` | 一間教室可累積多筆不同日期的預約。 |
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    classrooms["classrooms<br/>教室<br/>PK classroom_id"]
+    course_times["course_times<br/>固定授課時段"]
+    long_term["long_term_bookings<br/>週期性借用"]
+    bookings["bookings<br/>單次預約"]
+
+    classrooms -->|"1 : N<br/>classroom_id 固定課表"| course_times
+    classrooms -->|"1 : N<br/>classroom_id 週期性借用"| long_term
+    classrooms -->|"1 : N<br/>classroom_id 單次預約"| bookings
+```
+
+三條連線均為必填外鍵；教室停用時保留既有關聯資料，但不得接受新的待審核或已核准預約。
+
 ## 其他邏輯規則
 
 1. `capacity` 必須大於零。

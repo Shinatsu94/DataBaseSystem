@@ -35,6 +35,32 @@
 | `booking_reviews` | `1:N` | 子資料 |
 | `notifications` | `1:N` | 子資料 |
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    users["users<br/>使用者"]
+    classrooms["classrooms<br/>教室"]
+    sections["sections<br/>節次"]
+    statuses["booking_statuses<br/>預約狀態"]
+    long_term["long_term_bookings<br/>週期性借用"]
+    course_times["course_times<br/>固定授課時段"]
+    bookings["bookings<br/>單次預約<br/>PK booking_id"]
+    reviews["booking_reviews<br/>審核歷程"]
+    notifications["notifications<br/>通知"]
+
+    users -->|"1 : N<br/>applicant_id 必填"| bookings
+    classrooms -->|"1 : N<br/>classroom_id 必填"| bookings
+    sections -->|"1 : N × 2<br/>起訖節次必填"| bookings
+    statuses -->|"1 : N<br/>status_id 必填"| bookings
+    long_term -.->|"1 : N<br/>long_term_id 可選參照"| bookings
+    course_times -.->|"1 : N<br/>course_time_id 可選參照"| bookings
+    bookings -->|"1 : N<br/>booking_id 審核歷程"| reviews
+    bookings -.->|"1 : N<br/>booking_id 可選通知關聯"| notifications
+```
+
+指向 `bookings` 的實線為必填外鍵，虛線為可選來源；由 `bookings` 指向子實體的連線表示一筆預約可保留多次審核及多則通知。
+
 ## 其他邏輯規則
 
 1. 學生與教師只能建立自己的 `pending` 預約。

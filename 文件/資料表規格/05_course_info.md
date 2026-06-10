@@ -21,6 +21,20 @@
 - `users 1:N course_info`：一位教師可教授多門課程。
 - `course_info 1:N course_times`：一門課程可安排多個固定授課時段。
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    users["users<br/>使用者"]
+    course_info["course_info<br/>課程資訊<br/>PK course_id"]
+    course_times["course_times<br/>固定授課時段"]
+
+    users -->|"1 : N<br/>teacher_id 授課教師"| course_info
+    course_info -->|"1 : N<br/>course_id 包含授課時段"| course_times
+```
+
+兩條連線均為必填外鍵；`teacher_id` 除了參照既有使用者，還必須通過教師角色驗證。
+
 ## 其他邏輯規則
 
 1. `teacher_id` 必須參照 `role = 'teacher'` 的使用者。

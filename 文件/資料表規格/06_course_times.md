@@ -27,6 +27,24 @@
 
 `bookings.course_time_id` 可選擇性參照本表，用於標示與特定課程時段相關的額外借用。
 
+## 局部實體關聯圖
+
+```mermaid
+flowchart LR
+    course_info["course_info<br/>課程資訊"]
+    classrooms["classrooms<br/>教室"]
+    sections["sections<br/>節次"]
+    course_times["course_times<br/>固定授課時段<br/>PK course_time_id"]
+    bookings["bookings<br/>單次預約"]
+
+    course_info -->|"1 : N<br/>course_id 必填"| course_times
+    classrooms -->|"1 : N<br/>classroom_id 必填"| course_times
+    sections -->|"1 : N × 2<br/>起訖節次必填"| course_times
+    course_times -.->|"1 : N<br/>course_time_id 可選參照"| bookings
+```
+
+前三條實線為 `course_times` 的必填外鍵；通往 `bookings` 的虛線表示一般預約可不隸屬固定課程時段。
+
 ## 其他邏輯規則
 
 1. 同一教室、同一星期的固定課表不得發生節次重疊。

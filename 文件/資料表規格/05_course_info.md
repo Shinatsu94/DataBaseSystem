@@ -18,8 +18,10 @@
 
 ## 關聯
 
-- `users 1:N course_info`：一位教師可教授多門課程。
-- `course_info 1:N course_times`：一門課程可安排多個固定授課時段。
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `users` | `users 1:N course_info` | `course_info.teacher_id` -> `users.user_id` | 一位教師可教授多門課程。 | 教師 `B13005` 可對應資料庫系統課程。 |
+| `course_times` | `course_info 1:N course_times` | `course_times.course_id` -> `course_info.course_id` | 一門課程可安排多個固定授課時段。 | 編譯程式可同時有週四與週五課表。 |
 
 ## 局部實體關聯圖
 

@@ -19,13 +19,13 @@
 
 ## 關聯
 
-| 父實體 | 基數 | 用途 |
-|---|---|---|
-| `course_info` | `1:N` | 一門課程可具有多個固定時段。 |
-| `classrooms` | `1:N` | 一間教室可在不同星期與節次安排多門課。 |
-| `sections` | `1:N` | 節次可作為多筆課表的開始或結束。 |
-
-`bookings.course_time_id` 可選擇性參照本表，用於標示與特定課程時段相關的額外借用。
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `course_info` | `course_info 1:N course_times` | `course_times.course_id` -> `course_info.course_id` | 一門課程可具有多個固定時段。 | `11422011` 編譯程式可有兩筆固定課表。 |
+| `classrooms` | `classrooms 1:N course_times` | `course_times.classroom_id` -> `classrooms.classroom_id` | 一間教室可在不同星期與節次安排多門課。 | `BGC0513` 可安排資料庫系統與編譯程式。 |
+| `sections` | `sections 1:N course_times` | `course_times.start_section_id` -> `sections.section_id` | 一個節次可作為多筆固定課表的開始節次。 | 第 1 節可作為資料庫系統開始節次。 |
+| `sections` | `sections 1:N course_times` | `course_times.end_section_id` -> `sections.section_id` | 一個節次可作為多筆固定課表的結束節次。 | 第 3 節可作為資料庫系統結束節次。 |
+| `bookings` | `course_times 1:N bookings` | `bookings.course_time_id` -> `course_times.course_time_id` | 一筆固定課表可被多筆課程相關預約參照；此欄位可為空。 | 課程補課預約可連結原固定課表。 |
 
 ## 局部實體關聯圖
 

@@ -23,7 +23,14 @@
 
 ## 關聯
 
-`course_times`、`long_term_bookings`、`bookings` 均以 `start_section_id` 與 `end_section_id` 參照本表。每一個節次可被多筆課表或預約使用，因此關聯為 `1:N`。
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `course_times` | `sections 1:N course_times` | `course_times.start_section_id` -> `sections.section_id` | 一個節次可作為多筆固定課表的開始節次。 | 第 1 節可作為資料庫系統課程開始節次。 |
+| `course_times` | `sections 1:N course_times` | `course_times.end_section_id` -> `sections.section_id` | 一個節次可作為多筆固定課表的結束節次。 | 第 3 節可作為資料庫系統課程結束節次。 |
+| `long_term_bookings` | `sections 1:N long_term_bookings` | `long_term_bookings.start_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的開始節次。 | 第 5 節可作為專題小組定期會議開始節次。 |
+| `long_term_bookings` | `sections 1:N long_term_bookings` | `long_term_bookings.end_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的結束節次。 | 第 6 節可作為專題小組定期會議結束節次。 |
+| `bookings` | `sections 1:N bookings` | `bookings.start_section_id` -> `sections.section_id` | 一個節次可作為多筆單次預約的開始節次。 | 第 8 節可作為 `BRA0102` 場勘開始節次。 |
+| `bookings` | `sections 1:N bookings` | `bookings.end_section_id` -> `sections.section_id` | 一個節次可作為多筆單次預約的結束節次。 | 第 9 節可作為 `BRA0102` 場勘結束節次。 |
 
 ## 局部實體關聯圖
 

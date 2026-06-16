@@ -19,10 +19,10 @@
 
 ## 關聯
 
-| 關聯實體 | 基數 | 必填 | 關聯意義 |
-|---|---|---|---|
-| `users` | `1:N` | 是 | 一位使用者可收到多筆通知；每筆通知必須具有一位收件人。 |
-| `bookings` | `1:N` | 否 | 一筆預約可產生多筆通知；一般公告可不參照預約。 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `users` | `users 1:N notifications` | `notifications.recipient_id` -> `users.user_id` | 一位使用者可收到多筆通知；每筆通知必須具有一位收件人。 | `41243149` 可收到核准通知及長期借用通知。 |
+| `bookings` | `bookings 1:N notifications` | `notifications.booking_id` -> `bookings.booking_id` | 一筆預約可產生多筆通知；一般公告可不參照預約。 | 預約 `3` 可產生 `BRA0102` 場勘核准通知。 |
 
 ## 局部實體關聯圖
 

@@ -19,11 +19,11 @@
 
 ## 關聯
 
-| 關聯實體 | 基數 | 外鍵 | 關聯意義 |
-|---|---|---|---|
-| `bookings` | `1:N` | `booking_id` | 一筆預約可具有多次審核歷程；每筆審核只能屬於一筆預約。 |
-| `users` | `1:N` | `reviewer_id` | 一位管理員可執行多次審核；每筆審核只能由一位管理員執行。 |
-| `booking_statuses` | `1:N` | `status_id` | 一種狀態可被多筆審核採用；每筆審核只保存一個決策狀態。 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `bookings` | `bookings 1:N booking_reviews` | `booking_reviews.booking_id` -> `bookings.booking_id` | 一筆預約可具有多次審核歷程；每筆審核只能屬於一筆預約。 | 預約 `3` 可留下場勘核准紀錄。 |
+| `users` | `users 1:N booking_reviews` | `booking_reviews.reviewer_id` -> `users.user_id` | 一位管理員可執行多次審核；每筆審核只能由一位管理員執行。 | 管理員 `E13006` 可留下多筆審核紀錄。 |
+| `booking_statuses` | `booking_statuses 1:N booking_reviews` | `booking_reviews.status_id` -> `booking_statuses.status_id` | 一種狀態可被多筆審核採用；每筆審核只保存一個決策狀態。 | `approved` 可代表本次審核決策為核准。 |
 
 ## 局部實體關聯圖
 

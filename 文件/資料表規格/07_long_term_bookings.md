@@ -24,11 +24,14 @@
 
 ## 關聯
 
-- `users 1:N long_term_bookings`
-- `classrooms 1:N long_term_bookings`
-- `sections 1:N long_term_bookings`
-- `booking_statuses 1:N long_term_bookings`
-- `long_term_bookings 1:N bookings`
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `users` | `users 1:N long_term_bookings` | `long_term_bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆長期借用。 | `B13001` 可申請產學合作週會。 |
+| `classrooms` | `classrooms 1:N long_term_bookings` | `long_term_bookings.classroom_id` -> `classrooms.classroom_id` | 一間教室可被多筆週期性借用申請使用。 | `BGC0402` 可被多位教師申請固定週會。 |
+| `sections` | `sections 1:N long_term_bookings` | `long_term_bookings.start_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的開始節次。 | 第 5 節可作為專題小組定期會議開始節次。 |
+| `sections` | `sections 1:N long_term_bookings` | `long_term_bookings.end_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的結束節次。 | 第 6 節可作為專題小組定期會議結束節次。 |
+| `booking_statuses` | `booking_statuses 1:N long_term_bookings` | `long_term_bookings.status_id` -> `booking_statuses.status_id` | 一種狀態可套用於多筆長期借用。 | `approved` 可代表長期借用已核准。 |
+| `bookings` | `long_term_bookings 1:N bookings` | `bookings.long_term_id` -> `long_term_bookings.long_term_id` | 一筆長期借用可展開為多筆單次預約；此欄位可為空。 | 長期借用 `1` 可展開為 `2026-06-12` 的單次預約。 |
 
 ## 局部實體關聯圖
 

@@ -17,11 +17,11 @@
 
 ## 關聯
 
-| 子資料表 | 外鍵 | 基數 | 意義 |
-|---|---|---|---|
-| `course_times` | `classroom_id` | `1:N` | 一間教室可安排多筆不同星期或節次的固定課表。 |
-| `long_term_bookings` | `classroom_id` | `1:N` | 一間教室可具有多筆週期性借用規則。 |
-| `bookings` | `classroom_id` | `1:N` | 一間教室可累積多筆不同日期的預約。 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `course_times` | `classrooms 1:N course_times` | `course_times.classroom_id` -> `classrooms.classroom_id` | 一間教室可安排多筆不同星期或節次的固定課表。 | `BGC0513` 可安排資料庫系統與編譯程式時段。 |
+| `long_term_bookings` | `classrooms 1:N long_term_bookings` | `long_term_bookings.classroom_id` -> `classrooms.classroom_id` | 一間教室可具有多筆週期性借用規則。 | `BGC0402` 可被多筆教師週期性借用申請使用。 |
+| `bookings` | `classrooms 1:N bookings` | `bookings.classroom_id` -> `classrooms.classroom_id` | 一間教室可累積多筆不同日期的預約。 | `BGC0508` 可在不同日期被學生申請借用。 |
 
 ## 局部實體關聯圖
 

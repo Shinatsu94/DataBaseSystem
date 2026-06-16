@@ -24,16 +24,17 @@
 
 ## 關聯
 
-| 關聯實體 | 基數 | 必填 |
-|---|---|---|
-| `users` | `1:N` | 是 |
-| `classrooms` | `1:N` | 是 |
-| `sections` | `1:N` | 是 |
-| `booking_statuses` | `1:N` | 是 |
-| `long_term_bookings` | `1:N` | 否 |
-| `course_times` | `1:N` | 否 |
-| `booking_reviews` | `1:N` | 子資料 |
-| `notifications` | `1:N` | 子資料 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `users` | `users 1:N bookings` | `bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆單次預約。 | `41243149` 可申請 `BGC0508` 教室借用。 |
+| `classrooms` | `classrooms 1:N bookings` | `bookings.classroom_id` -> `classrooms.classroom_id` | 一間教室可累積多筆不同日期的預約。 | `BRA0102` 可被申請為 AI 研討會場勘。 |
+| `sections` | `sections 1:N bookings` | `bookings.start_section_id` -> `sections.section_id` | 一個節次可作為多筆單次預約的開始節次。 | 第 8 節可作為 `BRA0102` 場勘開始節次。 |
+| `sections` | `sections 1:N bookings` | `bookings.end_section_id` -> `sections.section_id` | 一個節次可作為多筆單次預約的結束節次。 | 第 9 節可作為 `BRA0102` 場勘結束節次。 |
+| `booking_statuses` | `booking_statuses 1:N bookings` | `bookings.status_id` -> `booking_statuses.status_id` | 一種狀態可套用於多筆單次預約。 | `pending` 可代表單次預約待審核。 |
+| `long_term_bookings` | `long_term_bookings 1:N bookings` | `bookings.long_term_id` -> `long_term_bookings.long_term_id` | 一筆長期借用可展開為多筆單次預約；此欄位可為空。 | 長期借用 `1` 可展開為 `2026-06-12` 的單次預約。 |
+| `course_times` | `course_times 1:N bookings` | `bookings.course_time_id` -> `course_times.course_time_id` | 一筆固定課表可被多筆課程相關預約參照；此欄位可為空。 | 課程補課預約可連結原固定課表。 |
+| `booking_reviews` | `bookings 1:N booking_reviews` | `booking_reviews.booking_id` -> `bookings.booking_id` | 一筆預約可保留多筆審核歷程。 | 預約 `3` 可留下場勘核准紀錄。 |
+| `notifications` | `bookings 1:N notifications` | `notifications.booking_id` -> `bookings.booking_id` | 一筆預約可產生多則通知；此欄位可為空。 | 預約 `3` 可產生 `BRA0102` 場勘核准通知。 |
 
 ## 局部實體關聯圖
 

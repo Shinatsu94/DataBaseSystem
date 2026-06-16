@@ -20,11 +20,11 @@
 
 ## 關聯
 
-| 子資料表 | 外鍵 | 基數 |
-|---|---|---|
-| `long_term_bookings` | `status_id` | `1:N` |
-| `bookings` | `status_id` | `1:N` |
-| `booking_reviews` | `status_id` | `1:N` |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `long_term_bookings` | `booking_statuses 1:N long_term_bookings` | `long_term_bookings.status_id` -> `booking_statuses.status_id` | 一種狀態可套用於多筆長期借用。 | `approved` 可代表長期借用已核准。 |
+| `bookings` | `booking_statuses 1:N bookings` | `bookings.status_id` -> `booking_statuses.status_id` | 一種狀態可套用於多筆單次預約。 | `pending` 可代表單次預約待審核。 |
+| `booking_reviews` | `booking_statuses 1:N booking_reviews` | `booking_reviews.status_id` -> `booking_statuses.status_id` | 一種狀態可記錄於多筆審核歷程。 | `rejected` 可記錄管理員拒絕原因。 |
 
 ## 局部實體關聯圖
 

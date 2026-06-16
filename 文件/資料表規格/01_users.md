@@ -27,13 +27,13 @@ CHECK (user_id REGEXP '^([0-9]{8}|[A-Z][0-9]{5,7})$')
 
 ## 關聯
 
-| 子資料表 | 外鍵 | 基數 | 意義 |
-|---|---|---|---|
-| `course_info` | `teacher_id` | `1:N` | 一位教師可教授多門課程。 |
-| `long_term_bookings` | `applicant_id` | `1:N` | 一位教師可提出多筆週期性借用。 |
-| `bookings` | `applicant_id` | `1:N` | 一位使用者可提出多筆單次預約。 |
-| `booking_reviews` | `reviewer_id` | `1:N` | 一位管理員可建立多筆審核歷程。 |
-| `notifications` | `recipient_id` | `1:N` | 一位使用者可收到多則通知。 |
+| 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
+|---|---|---|---|---|
+| `course_info` | `users 1:N course_info` | `course_info.teacher_id` -> `users.user_id` | 一位教師可教授多門課程。 | 教師 `B13005` 可對應資料庫系統課程。 |
+| `long_term_bookings` | `users 1:N long_term_bookings` | `long_term_bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆長期借用。 | `B13001` 可申請產學合作週會。 |
+| `bookings` | `users 1:N bookings` | `bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆單次預約。 | `41243149` 可申請 `BGC0508` 教室借用。 |
+| `booking_reviews` | `users 1:N booking_reviews` | `booking_reviews.reviewer_id` -> `users.user_id` | 一位管理員可執行多次審核。 | 管理員 `E13006` 可留下多筆審核紀錄。 |
+| `notifications` | `users 1:N notifications` | `notifications.recipient_id` -> `users.user_id` | 一位使用者可接收多則通知。 | `41243149` 可收到核准通知及長期借用通知。 |
 
 ## 局部實體關聯圖
 

@@ -71,13 +71,13 @@ SELECT * FROM vw_long_term_bookings ORDER BY created_at DESC;
 
 | ID | 申請人 | 教室 | 星期／節次 | 狀態 |
 |---:|---|---|---|---|
-| 1 | T0000001 | A101 | 週一 5–6 | approved |
-| 2 | T0000002 | A102 | 週二 1–2 | pending |
-| 3 | T0000003 | B201 | 週三 5–6 | under_review |
-| 4 | T0000004 | B202 | 週四 1–2 | approved |
-| 5 | T0000001 | B205 | 週五 5–6 | rejected |
-| 6 | T0000002 | C301 | 週一 1–2 | canceled |
-| 7 | T0000003 | C302 | 週二 1–2 | expired |
-| 8 | T0000004 | D401 | 週三 1–2 | completed |
-| 9 | T0000001 | LAB501 | 週四 5–6 | suspended |
-| 10 | T0000002 | CONF01 | 週五 3–4 | resubmission_required |
+| 1 | 41243149 | BGC0508 | 週五 5–6 | approved |
+| 2 | 41243154 | BGC0508 | 週三 8–9 | approved |
+| 3 | B13027 | BGC0601 | 週一 9–10 | approved |
+| 4 | 41243151 | BGC0508 | 週三 5–5 | approved |
+| 5 | B13014 | BGC0402 | 週五 8–8 | approved |
+| 6 | B13020 | BGC0402 | 週三 8–9 | pending |
+| 7 | B13027 | BGC0402 | 週五 2–3 | rejected |
+| 8 | B13035 | BGC0402 | 週四 5–6 | canceled |
+| 9 | B13001 | BGC0402 | 週二 1–2 | approved |
+| 10 | B13007 | BGC0402 | 週一 5–6 | pending |

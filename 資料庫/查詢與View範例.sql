@@ -73,8 +73,8 @@ SHOW CREATE VIEW vw_bookings;
 --   applicant_id, classroom_id, booking_date,
 --   start_section_id, end_section_id, reason, status_id
 -- ) VALUES (
---   '41243149', 'A101', DATE '2026-07-01',
---   5, 6, '暑期專題討論', 2
+--   '41243149', 'BGC0508', DATE '2026-07-01',
+--   5, 6, '暑期專題討論', 1
 -- );
 
 -- 7. 使用者將自己的通知標記為已讀。

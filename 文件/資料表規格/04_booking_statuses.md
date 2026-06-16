@@ -60,12 +60,12 @@ SELECT * FROM vw_booking_statuses ORDER BY status_id;
 
 | ID | 代碼 | 中文名稱 |
 |---:|---|---|
-| 1 | draft | 草稿 |
-| 2 | pending | 待審核 |
-| 3 | under_review | 審核中 |
-| 4 | approved | 已核准 |
-| 5 | rejected | 已拒絕 |
-| 6 | canceled | 已取消 |
+| 1 | pending | 待審核 |
+| 2 | approved | 已核准 |
+| 3 | rejected | 已拒絕 |
+| 4 | canceled | 已取消 |
+| 5 | draft | 草稿 |
+| 6 | under_review | 審核中 |
 | 7 | expired | 已逾期 |
 | 8 | completed | 已完成 |
 | 9 | suspended | 已暫停 |

@@ -56,7 +56,7 @@ CREATE TABLE users (
   role        ENUM('student', 'teacher', 'admin') NOT NULL,
   department  VARCHAR(80),
   CONSTRAINT chk_users_id_format CHECK (
-    user_id REGEXP '^([0-9]{8}|T[0-9]{7}|A[0-9]{7})$'
+    user_id REGEXP '^([0-9]{8}|[A-Z][0-9]{5,7})$'
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -624,7 +624,7 @@ CREATE INDEX idx_notifications_recipient_read
   ON notifications(recipient_id, is_read);
 
 -- View 使用 USER() 取得登入 MariaDB 的帳號名稱。
--- 一般帳號名稱應與 users.user_id 相同，例如 '41243149'@'localhost'。
+-- 一般帳號名稱應與 users.user_id 相同，例如 '41243149'@'localhost' 或 'B13005'@'localhost'。
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW vw_users AS
 SELECT
   user_id, username, email, role, department
@@ -777,12 +777,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW
 -- GRANT classroom_student_role TO '41243149'@'localhost';
 -- SET DEFAULT ROLE classroom_student_role FOR '41243149'@'localhost';
 --
--- CREATE USER IF NOT EXISTS 'T0000001'@'localhost'
+-- CREATE USER IF NOT EXISTS 'B13005'@'localhost'
 --   IDENTIFIED BY 'replace-with-strong-password';
--- GRANT classroom_teacher_role TO 'T0000001'@'localhost';
--- SET DEFAULT ROLE classroom_teacher_role FOR 'T0000001'@'localhost';
+-- GRANT classroom_teacher_role TO 'B13005'@'localhost';
+-- SET DEFAULT ROLE classroom_teacher_role FOR 'B13005'@'localhost';
 --
--- CREATE USER IF NOT EXISTS 'A0000001'@'localhost'
+-- CREATE USER IF NOT EXISTS 'E13006'@'localhost'
 --   IDENTIFIED BY 'replace-with-strong-password';
--- GRANT classroom_admin_role TO 'A0000001'@'localhost';
--- SET DEFAULT ROLE classroom_admin_role FOR 'A0000001'@'localhost';
+-- GRANT classroom_admin_role TO 'E13006'@'localhost';
+-- SET DEFAULT ROLE classroom_admin_role FOR 'E13006'@'localhost';

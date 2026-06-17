@@ -17,6 +17,17 @@
 | `start_section_id` | `TINYINT UNSIGNED` | FK | `NOT NULL` | 固定課程開始節次 | 參照 `sections`，避免重複保存時間。 |
 | `end_section_id` | `TINYINT UNSIGNED` | FK | `NOT NULL`、不得早於開始節次 | 固定課程結束節次 | 與開始節次使用相同 Domain，`CHECK` 防止反向範圍。 |
 
+## 嚴格值域與正則表達式限制
+
+固定課表直接影響教室衝突檢查，必須拒絕任何未定義課程、教室、星期或節次。
+
+- `course_time_id`：系統自動產生，不提供使用者輸入；若用於查詢參數，只接受正整數。正則：`^[1-9][0-9]{0,18}$`。
+- `course_id`：必須符合課程主檔八位數字代碼。正則：`^[0-9]{8}$`，並以外鍵參照 `course_info.course_id`。
+- `classroom_id`：必須符合教室代碼格式。正則：`^[A-Z]{3}[0-9]{4}$`，並以外鍵參照 `classrooms.classroom_id`。
+- `day_of_week`：只能為 `1` 至 `7`，其中 `1` 為星期一、`7` 為星期日。正則：`^[1-7]$`。資料庫已以 `CHECK` 限制。
+- `start_section_id`：目前只接受一至十三節。正則：`^(?:[1-9]|1[0-3])$`，並以外鍵參照 `sections.section_id`。
+- `end_section_id`：格式同 `start_section_id`，正則：`^(?:[1-9]|1[0-3])$`，且必須滿足 `start_section_id <= end_section_id`。資料庫已以 `chk_course_times_section_range` 檢查。
+
 ## 關聯
 
 | 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |

@@ -14,6 +14,14 @@
 | `status_code` | `VARCHAR(32)` | UK | `NOT NULL`、`UNIQUE`、十種代碼 `CHECK` | 程式流程與 API 使用的穩定代碼 | `draft` 與 `resubmission_required` 長度不同，因此使用可變長度文字；唯一與檢查限制阻擋重複或未定義代碼。 |
 | `status_name` | `VARCHAR(20)` | 無 | `NOT NULL` | 介面顯示的中文名稱 | 顯示名稱長度可變且每個狀態都必須具有可讀名稱。 |
 
+## 嚴格值域與正則表達式限制
+
+狀態主檔影響預約流程判斷，僅管理員可維護，且不接受任意自訂狀態。
+
+- `status_id`：目前固定一至十。正則：`^(?:[1-9]|10)$`。此值作為外鍵主資料，不得使用零、負數、小數或跳號文字。
+- `status_code`：只能為十個已定義流程代碼。正則：`^(draft|pending|under_review|approved|rejected|canceled|expired|completed|suspended|resubmission_required)$`。資料庫已以 `CHECK` 與 `UNIQUE` 限制。
+- `status_name`：只允許中文、英文字母與數字，長度二至二十字。正則：`^[\p{Han}A-Za-z0-9]{2,20}$`。此欄位用於顯示，不得輸入說明句、符號字串或空白內容。
+
 ## 為何不使用 ENUM
 
 本表本身即為正規化的狀態 Domain。若 `status_code` 再使用 `ENUM`，每次新增狀態都必須同時修改資料表型態與狀態資料，造成重複維護。因此採 `VARCHAR(32)` 配合 `UNIQUE` 與 `CHECK`，由本表統一管理狀態。

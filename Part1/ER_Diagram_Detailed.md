@@ -1,6 +1,6 @@
 # 教室租用系統：詳細實體關聯圖
 
-> [返回專案總覽](../專案總攬.md) | [簡要 ER 圖](ER_Diagram.md) | [diagrams.net 原始檔](ER_Diagram_Detailed.drawio)
+> [返回專案總覽](../README.md) | [簡要 ER 圖](ER_Diagram.md) | [diagrams.net 原始檔](ER_Diagram_Detailed.drawio)
 
 本圖依據 [`完整資料庫Schema.sql`](../Part2/完整資料庫Schema.sql) 繪製。實體方塊列出完整欄位與鍵值類型；每條線均直接標示 `1 : N`，虛線表示子實體外鍵允許 `NULL`。
 

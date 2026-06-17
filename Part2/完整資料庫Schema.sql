@@ -56,7 +56,16 @@ CREATE TABLE users (
   role        ENUM('student', 'teacher', 'admin') NOT NULL,
   department  VARCHAR(80),
   CONSTRAINT chk_users_id_format CHECK (
-    user_id REGEXP '^([0-9]{8}|[A-Z][0-9]{5,7})$'
+    BINARY user_id REGEXP '^([0-9]{8}|[a-z][0-9]{5,7})$'
+  ),
+  CONSTRAINT chk_users_username_length CHECK (
+    CHAR_LENGTH(TRIM(username)) BETWEEN 2 AND 60
+  ),
+  CONSTRAINT chk_users_email_format CHECK (
+    email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,63}$'
+  ),
+  CONSTRAINT chk_users_department_length CHECK (
+    department IS NULL OR CHAR_LENGTH(TRIM(department)) BETWEEN 2 AND 80
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -65,7 +74,13 @@ CREATE TABLE classrooms (
   classroom_name  VARCHAR(80) NOT NULL,
   capacity        SMALLINT UNSIGNED NOT NULL,
   is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-  CONSTRAINT chk_classrooms_capacity CHECK (capacity > 0),
+  CONSTRAINT chk_classrooms_id_format CHECK (
+    BINARY classroom_id REGEXP '^[A-Z]{3}[0-9]{4}$'
+  ),
+  CONSTRAINT chk_classrooms_name_length CHECK (
+    CHAR_LENGTH(TRIM(classroom_name)) BETWEEN 2 AND 80
+  ),
+  CONSTRAINT chk_classrooms_capacity CHECK (capacity BETWEEN 1 AND 1000),
   CONSTRAINT chk_classrooms_active CHECK (is_active IN (FALSE, TRUE))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -74,6 +89,10 @@ CREATE TABLE sections (
   section_name  VARCHAR(20) NOT NULL UNIQUE,
   start_time    TIME(0) NOT NULL,
   end_time      TIME(0) NOT NULL,
+  CONSTRAINT chk_sections_id_range CHECK (section_id BETWEEN 1 AND 13),
+  CONSTRAINT chk_sections_name_format CHECK (
+    section_name REGEXP '^第 ([1-9]|1[0-3]) 節$'
+  ),
   CONSTRAINT chk_sections_clock_time CHECK (
     start_time BETWEEN '00:00:00' AND '23:59:59'
     AND end_time BETWEEN '00:00:00' AND '23:59:59'
@@ -85,19 +104,12 @@ CREATE TABLE booking_statuses (
   status_id    TINYINT UNSIGNED PRIMARY KEY,
   status_code  VARCHAR(32) NOT NULL UNIQUE,
   status_name  VARCHAR(20) NOT NULL,
+  CONSTRAINT chk_statuses_id_range CHECK (status_id BETWEEN 1 AND 10),
   CONSTRAINT chk_statuses_code CHECK (
-    status_code IN (
-      'draft',
-      'pending',
-      'under_review',
-      'approved',
-      'rejected',
-      'canceled',
-      'expired',
-      'completed',
-      'suspended',
-      'resubmission_required'
-    )
+    BINARY status_code REGEXP '^(draft|pending|under_review|approved|rejected|canceled|expired|completed|suspended|resubmission_required)$'
+  ),
+  CONSTRAINT chk_statuses_name_length CHECK (
+    CHAR_LENGTH(TRIM(status_name)) BETWEEN 2 AND 20
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -107,9 +119,15 @@ CREATE TABLE course_info (
   semester        TINYINT UNSIGNED NOT NULL,
   course_name     VARCHAR(120) NOT NULL,
   teacher_id      CHAR(8) NOT NULL,
+  CONSTRAINT chk_course_info_id_format CHECK (
+    course_id REGEXP '^[0-9]{8}$'
+  ),
   CONSTRAINT chk_course_info_academic_year
     CHECK (academic_year BETWEEN 1 AND 999),
   CONSTRAINT chk_course_info_semester CHECK (semester IN (1, 2)),
+  CONSTRAINT chk_course_info_name_length CHECK (
+    CHAR_LENGTH(TRIM(course_name)) BETWEEN 2 AND 120
+  ),
   CONSTRAINT fk_course_info_teacher
     FOREIGN KEY (teacher_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -148,6 +166,9 @@ CREATE TABLE long_term_bookings (
   CONSTRAINT chk_long_term_date_range CHECK (start_date <= end_date),
   CONSTRAINT chk_long_term_weekday CHECK (day_of_week BETWEEN 1 AND 7),
   CONSTRAINT chk_long_term_section_range CHECK (start_section_id <= end_section_id),
+  CONSTRAINT chk_long_term_reason_length CHECK (
+    CHAR_LENGTH(TRIM(reason)) BETWEEN 5 AND 500
+  ),
   CONSTRAINT fk_long_term_applicant
     FOREIGN KEY (applicant_id) REFERENCES users(user_id),
   CONSTRAINT fk_long_term_classroom
@@ -173,6 +194,9 @@ CREATE TABLE bookings (
   status_id          TINYINT UNSIGNED NOT NULL,
   created_at         TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT chk_bookings_section_range CHECK (start_section_id <= end_section_id),
+  CONSTRAINT chk_bookings_reason_length CHECK (
+    CHAR_LENGTH(TRIM(reason)) BETWEEN 5 AND 500
+  ),
   CONSTRAINT fk_bookings_applicant
     FOREIGN KEY (applicant_id) REFERENCES users(user_id),
   CONSTRAINT fk_bookings_classroom
@@ -196,6 +220,9 @@ CREATE TABLE booking_reviews (
   status_id    TINYINT UNSIGNED NOT NULL,
   comment      TEXT,
   reviewed_at  TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  CONSTRAINT chk_reviews_comment_length CHECK (
+    comment IS NULL OR CHAR_LENGTH(TRIM(comment)) BETWEEN 1 AND 500
+  ),
   CONSTRAINT fk_reviews_booking
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
   CONSTRAINT fk_reviews_reviewer
@@ -211,6 +238,9 @@ CREATE TABLE notifications (
   message          TEXT NOT NULL,
   is_read          BOOLEAN NOT NULL DEFAULT FALSE,
   created_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  CONSTRAINT chk_notifications_message_length CHECK (
+    CHAR_LENGTH(TRIM(message)) BETWEEN 5 AND 500
+  ),
   CONSTRAINT chk_notifications_read CHECK (is_read IN (FALSE, TRUE)),
   CONSTRAINT fk_notifications_recipient
     FOREIGN KEY (recipient_id) REFERENCES users(user_id),
@@ -624,7 +654,7 @@ CREATE INDEX idx_notifications_recipient_read
   ON notifications(recipient_id, is_read);
 
 -- View 使用 USER() 取得登入 MariaDB 的帳號名稱。
--- 一般帳號名稱應與 users.user_id 相同，例如 '41243149'@'localhost' 或 'B13005'@'localhost'。
+-- 一般帳號名稱應與 users.user_id 相同，例如 '41243149'@'localhost' 或 'b13005'@'localhost'。
 CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW vw_users AS
 SELECT
   user_id, username, email, role, department
@@ -777,12 +807,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW
 -- GRANT classroom_student_role TO '41243149'@'localhost';
 -- SET DEFAULT ROLE classroom_student_role FOR '41243149'@'localhost';
 --
--- CREATE USER IF NOT EXISTS 'B13005'@'localhost'
+-- CREATE USER IF NOT EXISTS 'b13005'@'localhost'
 --   IDENTIFIED BY 'replace-with-strong-password';
--- GRANT classroom_teacher_role TO 'B13005'@'localhost';
--- SET DEFAULT ROLE classroom_teacher_role FOR 'B13005'@'localhost';
+-- GRANT classroom_teacher_role TO 'b13005'@'localhost';
+-- SET DEFAULT ROLE classroom_teacher_role FOR 'b13005'@'localhost';
 --
--- CREATE USER IF NOT EXISTS 'E13006'@'localhost'
+-- CREATE USER IF NOT EXISTS 'e13006'@'localhost'
 --   IDENTIFIED BY 'replace-with-strong-password';
--- GRANT classroom_admin_role TO 'E13006'@'localhost';
--- SET DEFAULT ROLE classroom_admin_role FOR 'E13006'@'localhost';
+-- GRANT classroom_admin_role TO 'e13006'@'localhost';
+-- SET DEFAULT ROLE classroom_admin_role FOR 'e13006'@'localhost';

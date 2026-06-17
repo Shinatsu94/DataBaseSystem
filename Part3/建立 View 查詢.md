@@ -47,7 +47,7 @@
 | `JOIN course_times ct ON ci.course_id = ct.course_id` | 連接課程時段 | 顯示課程實際上課教室與節次。 |
 | `JOIN classrooms c ON ct.classroom_id = c.classroom_id` | 連接教室 | 顯示上課教室名稱。 |
 | `JOIN sections ss` 與 `JOIN sections es` | 連接開始與結束節次 | 顯示課程時段範圍。 |
-| `ORDER BY ct.weekday, ss.start_time` | 排序課表結果 | 依星期與開始時間排序，接近實際課表閱讀方式。 |
+| `ORDER BY ct.day_of_week, ss.start_time` | 排序課表結果 | 依星期與開始時間排序，接近實際課表閱讀方式。 |
 
 完整用意：此查詢證明課程主檔與課程時段分離的設計可以支援一門課對多個時段，並能用於檢查教室是否已被固定課程占用。
 

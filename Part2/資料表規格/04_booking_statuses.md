@@ -10,17 +10,17 @@
 
 | 欄位 | 型態 | 鍵值／預設 | 限制 | 系統用途 | 型態與限制理由 |
 |---|---|---|---|---|---|
-| `status_id` | `TINYINT UNSIGNED` | PK | `NOT NULL` | 狀態外鍵識別碼 | 狀態數量有限且不得為負值，小型無號整數足以表示。 |
-| `status_code` | `VARCHAR(32)` | UK | `NOT NULL`、`UNIQUE`、十種代碼 `CHECK` | 程式流程與 API 使用的穩定代碼 | `draft` 與 `resubmission_required` 長度不同，因此使用可變長度文字；唯一與檢查限制阻擋重複或未定義代碼。 |
-| `status_name` | `VARCHAR(20)` | 無 | `NOT NULL` | 介面顯示的中文名稱 | 顯示名稱長度可變且每個狀態都必須具有可讀名稱。 |
+| `status_id` | `TINYINT UNSIGNED` | PK | `NOT NULL`、狀態編號 `CHECK` | 狀態外鍵識別碼 | 狀態數量有限且不得為負值，小型無號整數足以表示；`chk_statuses_id_range` 限制為 1 至 10。 |
+| `status_code` | `VARCHAR(32)` | UK | `NOT NULL`、`UNIQUE`、十種代碼 `CHECK` | 程式流程與 API 使用的穩定代碼 | `draft` 與 `resubmission_required` 長度不同，因此使用可變長度文字；`chk_statuses_code` 以大小寫敏感正則阻擋未定義代碼。 |
+| `status_name` | `VARCHAR(20)` | 無 | `NOT NULL`、名稱長度 `CHECK` | 介面顯示的中文名稱 | 顯示名稱長度可變且每個狀態都必須具有可讀名稱；`chk_statuses_name_length` 排除空白或過長名稱。 |
 
 ## 嚴格值域與正則表達式限制
 
 狀態主檔影響預約流程判斷，僅管理員可維護，且不接受任意自訂狀態。
 
-- `status_id`：目前固定一至十。正則：`^(?:[1-9]|10)$`。此值作為外鍵主資料，不得使用零、負數、小數或跳號文字。
-- `status_code`：只能為十個已定義流程代碼。正則：`^(draft|pending|under_review|approved|rejected|canceled|expired|completed|suspended|resubmission_required)$`。資料庫已以 `CHECK` 與 `UNIQUE` 限制。
-- `status_name`：只允許中文、英文字母與數字，長度二至二十字。正則：`^[\p{Han}A-Za-z0-9]{2,20}$`。此欄位用於顯示，不得輸入說明句、符號字串或空白內容。
+- `status_id`：目前固定一至十。正則：`^(?:[1-9]|10)$`。資料庫已以 `chk_statuses_id_range` 限制，不得使用零、負數、小數或跳號文字。
+- `status_code`：只能為十個已定義流程代碼。正則：`^(draft|pending|under_review|approved|rejected|canceled|expired|completed|suspended|resubmission_required)$`。資料庫已以 `chk_statuses_code` 與 `UNIQUE` 限制。
+- `status_name`：只允許中文、英文字母與數字，長度二至二十字。正則：`^[\p{Han}A-Za-z0-9]{2,20}$`。資料庫以 `chk_statuses_name_length` 檢查長度，完整字元集合由輸入層驗證。
 
 ## 為何不使用 ENUM
 

@@ -23,9 +23,9 @@
 
 - `review_id`：系統自動產生，不提供使用者輸入；若用於查詢條件，只接受正整數。正則：`^[1-9][0-9]{0,18}$`。
 - `booking_id`：必須為已存在預約的正整數。正則：`^[1-9][0-9]{0,18}$`，並以外鍵參照 `bookings.booking_id`。
-- `reviewer_id`：使用 `users.user_id` 相同格式。正則：`^([0-9]{8}|[A-Z][0-9]{5,7})$`，且必須參照 `role = 'admin'` 的使用者。管理員身份由 Trigger 驗證。
+- `reviewer_id`：使用 `users.user_id` 相同格式。正則：`^([0-9]{8}|[a-z][0-9]{5,7})$`，且必須參照 `role = 'admin'` 的使用者。管理員身份由 Trigger 驗證。
 - `status_id`：必須為一至十的狀態主檔代碼。正則：`^(?:[1-9]|10)$`，並以外鍵參照 `booking_statuses.status_id`。
-- `comment`：可為 `NULL`；若填寫，必須為零至五百字的正式說明，允許中文、英文字母、數字、空白與常用標點。正則：`^$|^[\p{Han}A-Za-z0-9，。；：、,.!?()（）《》「」\s\-_]{1,500}$`。不得輸入辱罵、私人聯絡資訊、HTML 或程式碼。
+- `comment`：可為 `NULL`；若填寫，必須為一至五百字的正式說明，允許中文、英文字母、數字、空白與常用標點。正則：`^$|^[\p{Han}A-Za-z0-9，。；：、,.!?()（）《》「」\s\-_]{1,500}$`。資料庫以 `chk_reviews_comment_length` 檢查長度，完整字元集合由輸入層驗證；不得輸入辱罵、私人聯絡資訊、HTML 或程式碼。
 - `reviewed_at`：由資料庫自動產生，不接受使用者輸入；若用於查詢條件，格式為 `YYYY-MM-DD HH:MM:SS[.ffffff]`。正則：`^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?$`。
 
 ## 關聯
@@ -33,7 +33,7 @@
 | 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
 |---|---|---|---|---|
 | `bookings` | `bookings 1:N booking_reviews` | `booking_reviews.booking_id` -> `bookings.booking_id` | 一筆預約可具有多次審核歷程；每筆審核只能屬於一筆預約。 | 預約 `3` 可留下場勘核准紀錄。 |
-| `users` | `users 1:N booking_reviews` | `booking_reviews.reviewer_id` -> `users.user_id` | 一位管理員可執行多次審核；每筆審核只能由一位管理員執行。 | 管理員 `E13006` 可留下多筆審核紀錄。 |
+| `users` | `users 1:N booking_reviews` | `booking_reviews.reviewer_id` -> `users.user_id` | 一位管理員可執行多次審核；每筆審核只能由一位管理員執行。 | 管理員 `e13006` 可留下多筆審核紀錄。 |
 | `booking_statuses` | `booking_statuses 1:N booking_reviews` | `booking_reviews.status_id` -> `booking_statuses.status_id` | 一種狀態可被多筆審核採用；每筆審核只保存一個決策狀態。 | `approved` 可代表本次審核決策為核准。 |
 
 ## 局部實體關聯圖
@@ -76,13 +76,13 @@ SHOW CREATE VIEW vw_booking_reviews;
 
 | ID | 預約 ID | 審核人 | 狀態 | 審核摘要 |
 |---:|---:|---|---|---|
-| 1 | 1 | E13006 | approved | 時段可使用，核准借用 |
-| 2 | 2 | E13006 | approved | 核准，請至系辦拿取鑰匙 |
-| 3 | 3 | F10013 | approved | 大型活動場勘核准 |
-| 4 | 4 | E13006 | approved | 確認未撞到正課與常規實驗 |
-| 5 | 5 | E13006 | approved | 長期借用計畫內自動核准 |
-| 6 | 6 | E13006 | pending | 尚在評估人數 |
-| 7 | 7 | E13006 | rejected | 定期儀器維護，不開放 |
-| 8 | 8 | E13006 | canceled | 申請人已自行取消 |
-| 9 | 9 | F10013 | approved | 特殊考場調度核可 |
-| 10 | 10 | E13006 | pending | 等待簽核同意書 |
+| 1 | 1 | e13006 | approved | 時段可使用，核准借用 |
+| 2 | 2 | e13006 | approved | 核准，請至系辦拿取鑰匙 |
+| 3 | 3 | f10013 | approved | 大型活動場勘核准 |
+| 4 | 4 | e13006 | approved | 確認未撞到正課與常規實驗 |
+| 5 | 5 | e13006 | approved | 長期借用計畫內自動核准 |
+| 6 | 6 | e13006 | pending | 尚在評估人數 |
+| 7 | 7 | e13006 | rejected | 定期儀器維護，不開放 |
+| 8 | 8 | e13006 | canceled | 申請人已自行取消 |
+| 9 | 9 | f10013 | approved | 特殊考場調度核可 |
+| 10 | 10 | e13006 | pending | 等待簽核同意書 |

@@ -27,14 +27,14 @@
 長期借用屬於跨日期、跨週期資料，除格式正確外，還必須通過日期區間、星期與節次一致性檢查。
 
 - `long_term_id`：系統自動產生，不提供使用者輸入；若作為查詢條件，只接受正整數。正則：`^[1-9][0-9]{0,18}$`。
-- `applicant_id`：使用 `users.user_id` 相同格式。正則：`^([0-9]{8}|[A-Z][0-9]{5,7})$`，並須參照已存在的學生或教師帳號；學生身份不得以學生權限自行建立長期借用。
+- `applicant_id`：使用 `users.user_id` 相同格式。正則：`^([0-9]{8}|[a-z][0-9]{5,7})$`，並須參照已存在的學生或教師帳號；學生身份不得以學生權限自行建立長期借用。
 - `classroom_id`：必須符合教室代碼格式。正則：`^[A-Z]{3}[0-9]{4}$`，並以外鍵參照 `classrooms.classroom_id`。
 - `start_date`：使用西元年月日 `YYYY-MM-DD`。正則：`^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$`。此正則只檢查格式，後端仍需檢查實際日曆日期，例如二月不得有三十日。
 - `end_date`：格式同 `start_date`，正則：`^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$`，且必須滿足 `start_date <= end_date`。資料庫已以 `chk_long_term_date_range` 檢查區間方向。
 - `day_of_week`：只能為 `1` 至 `7`。正則：`^[1-7]$`，並應與長期借用展開後日期的星期一致。
 - `start_section_id`：目前只接受一至十三節。正則：`^(?:[1-9]|1[0-3])$`，並以外鍵參照 `sections.section_id`。
 - `end_section_id`：格式同 `start_section_id`，正則：`^(?:[1-9]|1[0-3])$`，且必須滿足 `start_section_id <= end_section_id`。
-- `reason`：必須填寫五至五百字，允許中文、英文字母、數字、空白與常用標點。正則：`^[\p{Han}A-Za-z0-9，。；：、,.!?()（）《》「」\s\-_]{5,500}$`。不得只輸入空白、表情符號、網址或程式碼。
+- `reason`：必須填寫五至五百字，允許中文、英文字母、數字、空白與常用標點。正則：`^[\p{Han}A-Za-z0-9，。；：、,.!?()（）《》「」\s\-_]{5,500}$`。資料庫以 `chk_long_term_reason_length` 檢查長度，完整字元集合由輸入層驗證；不得只輸入空白、表情符號、網址或程式碼。
 - `status_id`：必須為一至十的狀態主檔代碼。正則：`^(?:[1-9]|10)$`，並以外鍵參照 `booking_statuses.status_id`。
 - `created_at`：由資料庫自動產生，不接受使用者輸入；若用於查詢條件，格式為 `YYYY-MM-DD HH:MM:SS[.ffffff]`。正則：`^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?$`。
 
@@ -42,7 +42,7 @@
 
 | 關聯實體 | 關聯類型 | 對方外鍵 | 說明 | 使用範例 |
 |---|---|---|---|---|
-| `users` | `users 1:N long_term_bookings` | `long_term_bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆長期借用。 | `B13001` 可申請產學合作週會。 |
+| `users` | `users 1:N long_term_bookings` | `long_term_bookings.applicant_id` -> `users.user_id` | 一位使用者可提出多筆長期借用。 | `b13001` 可申請產學合作週會。 |
 | `classrooms` | `classrooms 1:N long_term_bookings` | `long_term_bookings.classroom_id` -> `classrooms.classroom_id` | 一間教室可被多筆週期性借用申請使用。 | `BGC0402` 可被多位教師申請固定週會。 |
 | `sections` | `sections 1:N long_term_bookings` | `long_term_bookings.start_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的開始節次。 | 第 5 節可作為專題小組定期會議開始節次。 |
 | `sections` | `sections 1:N long_term_bookings` | `long_term_bookings.end_section_id` -> `sections.section_id` | 一個節次可作為多筆週期性借用的結束節次。 | 第 6 節可作為專題小組定期會議結束節次。 |
@@ -92,11 +92,11 @@ SELECT * FROM vw_long_term_bookings ORDER BY created_at DESC;
 |---:|---|---|---|---|
 | 1 | 41243149 | BGC0508 | 週五 5–6 | approved |
 | 2 | 41243154 | BGC0508 | 週三 8–9 | approved |
-| 3 | B13027 | BGC0601 | 週一 9–10 | approved |
+| 3 | b13027 | BGC0601 | 週一 9–10 | approved |
 | 4 | 41243151 | BGC0508 | 週三 5–5 | approved |
-| 5 | B13014 | BGC0402 | 週五 8–8 | approved |
-| 6 | B13020 | BGC0402 | 週三 8–9 | pending |
-| 7 | B13027 | BGC0402 | 週五 2–3 | rejected |
-| 8 | B13035 | BGC0402 | 週四 5–6 | canceled |
-| 9 | B13001 | BGC0402 | 週二 1–2 | approved |
-| 10 | B13007 | BGC0402 | 週一 5–6 | pending |
+| 5 | b13014 | BGC0402 | 週五 8–8 | approved |
+| 6 | b13020 | BGC0402 | 週三 8–9 | pending |
+| 7 | b13027 | BGC0402 | 週五 2–3 | rejected |
+| 8 | b13035 | BGC0402 | 週四 5–6 | canceled |
+| 9 | b13001 | BGC0402 | 週二 1–2 | approved |
+| 10 | b13007 | BGC0402 | 週一 5–6 | pending |

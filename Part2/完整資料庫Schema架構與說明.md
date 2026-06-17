@@ -43,7 +43,7 @@
 | `booking_reviews` | `review_id` | 預約、審核人、狀態 | 審核歷程 |
 | `notifications` | `notification_id` | 收件人、預約 | 通知與讀取狀態 |
 
-完整逐欄規格位於 [資料表規格索引](資料表規格/資料表規格索引.md)。
+完整逐欄規格位於 [資料表規格索引](資料表規格/資料表規格索引.md)，所有 `CHECK`、`REGEXP`、`ENUM`、`UNIQUE`、外鍵與 Trigger 的實際位置位於 [檢查限制與正則表達式索引](資料表規格/檢查限制與正則索引.md)。
 
 ## 型態選擇規則
 
@@ -75,16 +75,23 @@
 
 | 限制 | 套用資料 |
 |---|---|
-| `chk_users_id_format` | 學號為八位數字；教職員帳號為一個大寫英文字母加五至七位數字。 |
-| `chk_classrooms_capacity` | 教室容量必須大於零。 |
+| `chk_users_id_format` | 學號為八位數字；教職員帳號為一個小寫英文字母加五至七位數字，並以 `BINARY user_id REGEXP` 執行大小寫敏感檢查。 |
+| `chk_users_email_format` | Email 必須符合 `帳號@網域.頂層網域` 的基本格式。 |
+| `chk_users_username_length`、`chk_users_department_length` | 使用者姓名與單位不得為空白或超出欄位值域。 |
+| `chk_classrooms_id_format` | 教室代碼必須為三碼大寫英文加四碼數字。 |
+| `chk_classrooms_capacity` | 教室容量限制為 `1` 至 `1000`。 |
+| `chk_sections_id_range`、`chk_sections_name_format` | 節次編號限制為 `1` 至 `13`，節次名稱必須符合 `第 n 節`。 |
 | `chk_sections_clock_time` | 節次時刻限制於單一日的 `00:00:00` 至 `23:59:59`。 |
 | `chk_sections_range` | 開始時刻必須早於結束時刻。 |
-| `chk_statuses_code` | 狀態代碼限於十種正式生命週期狀態。 |
+| `chk_statuses_id_range`、`chk_statuses_code` | 狀態編號與代碼限於十種正式生命週期狀態，且代碼採大小寫敏感檢查。 |
+| `chk_course_info_id_format` | 課程代碼必須為八位數字。 |
 | `chk_course_info_academic_year` | 民國學年度限制於 `1` 至 `999`。 |
 | `chk_course_info_semester` | 學期只接受 `1` 或 `2`。 |
+| `chk_course_info_name_length` | 課程名稱不得為空白或過短。 |
 | 星期檢查 | 星期值限制於 `1` 至 `7`。 |
 | 節次範圍檢查 | 開始節次不得晚於結束節次。 |
 | 日期範圍檢查 | 週期性借用開始日期不得晚於結束日期。 |
+| 文字內容長度檢查 | 借用原因、審核意見與通知訊息不得為空白或超出規定長度。 |
 
 ## 預約狀態生命週期
 

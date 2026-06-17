@@ -10,18 +10,18 @@
 
 | 欄位 | 型態 | 鍵值／預設 | 限制 | 系統用途 | 型態與限制理由 |
 |---|---|---|---|---|---|
-| `classroom_id` | `VARCHAR(10)` | PK | `NOT NULL` | 教室、實驗室或會議室代碼 | `BGC0501`、`BRA0102`、`BCB0303` 長度不同，因此使用可變長度代碼；主鍵防止重複登錄。 |
-| `classroom_name` | `VARCHAR(80)` | 無 | `NOT NULL` | 顯示正式空間名稱 | 名稱長度不固定，且所有教室都必須有可辨識名稱。 |
-| `capacity` | `SMALLINT UNSIGNED` | 無 | `NOT NULL`、`CHECK (capacity > 0)` | 表示合法容納人數 | 人數不得為負值，`SMALLINT` 已足以涵蓋一般校園空間；零容量不具可借用意義。 |
+| `classroom_id` | `VARCHAR(10)` | PK | `NOT NULL`、代碼格式 `CHECK` | 教室、實驗室或會議室代碼 | `BGC0501`、`BRA0102`、`BCB0303` 長度不同，因此使用可變長度代碼；`chk_classrooms_id_format` 保證代碼符合正式格式。 |
+| `classroom_name` | `VARCHAR(80)` | 無 | `NOT NULL`、名稱長度 `CHECK` | 顯示正式空間名稱 | 名稱長度不固定，且所有教室都必須有可辨識名稱；`chk_classrooms_name_length` 排除空白或過短名稱。 |
+| `capacity` | `SMALLINT UNSIGNED` | 無 | `NOT NULL`、`CHECK (capacity BETWEEN 1 AND 1000)` | 表示合法容納人數 | 人數不得為負值，`SMALLINT` 已足以涵蓋一般校園空間；一至一千人可涵蓋校園教室容量並排除不合理輸入。 |
 | `is_active` | `BOOLEAN` | `TRUE` | `NOT NULL`、布林檢查 | 控制是否開放新預約 | 只有啟用與停用兩種狀態；預設新教室為啟用，停用教室由 Trigger 阻擋新預約。 |
 
 ## 嚴格值域與正則表達式限制
 
 以下規則用於限制管理員新增或修改教室主檔時的輸入值。
 
-- `classroom_id`：採三碼大寫建物代碼加四碼樓層與教室號。正則：`^[A-Z]{3}[0-9]{4}$`。合法例：`BGC0501`、`BRA0102`；不接受 `bgc0501`、`BGC-501` 或只有中文名稱的代碼。
-- `classroom_name`：只允許中文、英文字母、數字、空白、括號、頓號與連字號，長度二至八十字。正則：`^[\p{Han}A-Za-z0-9（）()、 -]{2,80}$`。此限制避免輸入 URL、程式片段或不具識別性的符號。
-- `capacity`：輸入格式必須為正整數，建議限制在一至一千人。正則：`^(?:[1-9][0-9]{0,2}|1000)$`。資料庫已以 `CHECK (capacity > 0)` 禁止零與負數；表單與後端需進一步限制不合理的大型值。
+- `classroom_id`：採三碼大寫建物代碼加四碼樓層與教室號。正則：`^[A-Z]{3}[0-9]{4}$`。資料庫已以 `chk_classrooms_id_format` 檢查此格式；合法例：`BGC0501`、`BRA0102`；不接受 `bgc0501`、`BGC-501` 或只有中文名稱的代碼。
+- `classroom_name`：只允許中文、英文字母、數字、空白、括號、頓號與連字號，長度二至八十字。正則：`^[\p{Han}A-Za-z0-9（）()、 -]{2,80}$`。資料庫以 `chk_classrooms_name_length` 檢查長度，完整字元集合由輸入層驗證。
+- `capacity`：輸入格式必須為正整數，限制在一至一千人。正則：`^(?:[1-9][0-9]{0,2}|1000)$`。資料庫已以 `chk_classrooms_capacity` 禁止零、負數與超過一千人的不合理容量。
 - `is_active`：只允許布林值。正則：`^(TRUE|FALSE|true|false|1|0)$`。資料庫以 `BOOLEAN` 與 `CHECK` 維持啟用或停用兩種狀態。
 
 ## 關聯

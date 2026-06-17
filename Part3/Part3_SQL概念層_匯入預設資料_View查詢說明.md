@@ -6,10 +6,10 @@
 
 | Part3 項目 | 專案總攬對應章節 | 說明 |
 |---|---|---|
-| SQL 語法涵蓋概念層 | [SQL：概念層到關聯式 Schema](../專案總攬.md#sql概念層到關聯式-schema) | 說明概念層實體如何落實為 MariaDB Schema。 |
-| 預設資料匯入 | [範例資料](../專案總攬.md#範例資料) | 說明如何匯入每張資料表至少 10 筆資料。 |
-| View Schema 與呼叫 | [View Schema 與呼叫](../專案總攬.md#view-schema-與呼叫) | 說明 View 的用途、呼叫方式與 `SHOW CREATE VIEW`。 |
-| 執行與驗證 | [執行方式](../專案總攬.md#執行方式) 與 [驗證結果](../專案總攬.md#驗證結果) | 說明建立資料庫、匯入資料與檢查結果的流程。 |
+| SQL 語法涵蓋概念層 | [SQL：概念層到關聯式 Schema](../README.md#sql概念層到關聯式-schema) | 說明概念層實體如何落實為 MariaDB Schema。 |
+| 預設資料匯入 | [範例資料](../README.md#範例資料) | 說明如何匯入每張資料表至少 10 筆資料。 |
+| View Schema 與呼叫 | [View Schema 與呼叫](../README.md#view-schema-與呼叫) | 說明 View 的用途、呼叫方式與 `SHOW CREATE VIEW`。 |
+| 執行與驗證 | [執行方式](../README.md#執行方式) 與 [驗證結果](../README.md#驗證結果) | 說明建立資料庫、匯入資料與檢查結果的流程。 |
 
 ## Part3 檔案
 
@@ -18,6 +18,9 @@
 | [完整資料庫Schema.sql](完整資料庫Schema.sql) | 建立完整 MariaDB Schema、Trigger、View、Role 與權限。 |
 | [範例資料.sql](範例資料.sql) | 匯入 10 張資料表的預設資料。 |
 | [查詢與View範例.sql](查詢與View範例.sql) | 執行概念層查詢、每個 View 的查詢與 `SHOW CREATE VIEW`。 |
+| [DB Schema 建立.md](<DB Schema 建立.md>) | 逐段說明 `完整資料庫Schema.sql` 中資料庫建立、十個實體、限制條件、觸發器、索引、View 與權限設定的用途。 |
+| [匯入預設資料.md](匯入預設資料.md) | 逐段說明 `範例資料.sql` 中每一個實體的匯入順序、資料用途、外鍵依據與驗證查詢。 |
+| [建立 View 查詢.md](<建立 View 查詢.md>) | 逐段說明 `查詢與View範例.sql` 中概念層查詢、每個 View 的呼叫方式與 View Schema 查詢。 |
 | [驗證說明.md](驗證說明.md) | 記錄 Schema、資料筆數、View 與權限驗證結果。 |
 | [參考資料](參考資料/) | 存放課程指定 PDF 與 PowerPoint 參考來源。 |
 
@@ -38,9 +41,17 @@
 | 審核歷程 | `booking_reviews` | 保存管理員審核紀錄。 |
 | 通知 | `notifications` | 保存使用者通知與讀取狀態。 |
 
-## 建立資料庫與匯入預設資料
+## DB Schema 建立、匯入預設資料、建立 View 查詢
 
-執行順序必須先建立 Schema，再匯入預設資料，最後執行查詢與 View 範例。
+Part3 的 SQL 執行流程分為三個部分，必須依照順序執行。
+
+| 執行順序 | 部分名稱 | 對應 SQL 檔案 | 詳細說明 |
+|---|---|---|---|
+| 1 | DB Schema 建立 | `完整資料庫Schema.sql` | [DB Schema 建立.md](<DB Schema 建立.md>) |
+| 2 | 匯入預設資料 | `範例資料.sql` | [匯入預設資料.md](匯入預設資料.md) |
+| 3 | 建立 View 查詢 | `查詢與View範例.sql` | [建立 View 查詢.md](<建立 View 查詢.md>) |
+
+第一步 `DB Schema 建立` 負責建立資料庫、資料表、完整性限制、觸發器、索引、View 與角色權限。第二步 `匯入預設資料` 負責依照外鍵相依順序匯入十個實體的預設資料。第三步 `建立 View 查詢` 負責示範概念層查詢、實際呼叫每個 View，並查詢 View 的 Schema 定義。
 
 ```powershell
 mariadb -u root -p < "Part3/完整資料庫Schema.sql"
@@ -55,6 +66,8 @@ SOURCE Part3/完整資料庫Schema.sql;
 SOURCE Part3/範例資料.sql;
 SOURCE Part3/查詢與View範例.sql;
 ```
+
+上述三個指令只是實際執行方式；每一段程式碼的欄位用途、限制條件、關聯依據、範例資料用途與 View 查詢意義，分別記錄於 `DB Schema 建立`、`匯入預設資料`、`建立 View 查詢` 三份說明文件中。
 
 匯入後可先確認資料庫與資料表：
 

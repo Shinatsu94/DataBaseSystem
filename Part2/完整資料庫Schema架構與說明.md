@@ -1,10 +1,10 @@
 # 完整資料庫 Schema 架構與說明
 
-> [返回專案總覽](../../專案總覽.md) | [完整 Schema SQL](../../資料庫/完整資料庫Schema.sql) | [範例資料](../../資料庫/範例資料.sql)
+> [返回專案總覽](../專案總攬.md) | [完整 Schema SQL](完整資料庫Schema.sql) | [範例資料](../../Part2/範例資料.sql)
 
 ## 文件目的
 
-本文件集中說明教室租用系統的完整資料庫 Schema。可執行的資料表、限制、Trigger、索引、View 與角色權限全部集中於 [`完整資料庫Schema.sql`](../../資料庫/完整資料庫Schema.sql)，避免多份 Schema 產生版本差異。
+本文件集中說明教室租用系統的完整資料庫 Schema。可執行的資料表、限制、Trigger、索引、View 與角色權限全部集中於 [`完整資料庫Schema.sql`](完整資料庫Schema.sql)，避免多份 Schema 產生版本差異。
 
 ## 架構分層
 
@@ -163,15 +163,15 @@ SHOW CREATE VIEW vw_bookings;
 ## 執行順序
 
 ```powershell
-mariadb -u root -p < "資料庫/完整資料庫Schema.sql"
-mariadb -u root -p < "資料庫/範例資料.sql"
-mariadb -u root -p < "資料庫/查詢與View範例.sql"
+mariadb -u root -p < "Part2/完整資料庫Schema.sql"
+mariadb -u root -p < "Part2/範例資料.sql"
+mariadb -u root -p < "Part3/查詢與View範例.sql"
 ```
 
 ## 範例資料規格
 
-[`範例資料.sql`](../../資料庫/範例資料.sql) 對 10 張資料表各建立至少 10 筆具體資料。資料載入使用交易控制，任何一筆違反限制時可避免留下部分完成的資料集。
+[`範例資料.sql`](../../Part2/範例資料.sql) 對 10 張資料表各建立至少 10 筆具體資料。資料載入使用交易控制，任何一筆違反限制時可避免留下部分完成的資料集。
 
 ## 參考資料
 
-完整參考資料及查閱日期統一列於 [專案總覽最後一節](../../專案總覽.md#參考資料)。
+完整參考資料及查閱日期統一列於 [專案總覽最後一節](../專案總攬.md#參考資料)。

@@ -6,10 +6,10 @@
 
 | Part3 項目 | 專案總攬對應章節 | 說明 |
 |---|---|---|
-| SQL 語法涵蓋概念層 | [SQL：概念層到關聯式 Schema](../專案總攬/專案總覽.md#sql概念層到關聯式-schema) | 說明概念層實體如何落實為 MariaDB Schema。 |
-| 預設資料匯入 | [範例資料](../專案總攬/專案總覽.md#範例資料) | 說明如何匯入每張資料表至少 10 筆資料。 |
-| View Schema 與呼叫 | [View Schema 與呼叫](../專案總攬/專案總覽.md#view-schema-與呼叫) | 說明 View 的用途、呼叫方式與 `SHOW CREATE VIEW`。 |
-| 執行與驗證 | [執行方式](../專案總攬/專案總覽.md#執行方式) 與 [驗證結果](../專案總攬/專案總覽.md#驗證結果) | 說明建立資料庫、匯入資料與檢查結果的流程。 |
+| SQL 語法涵蓋概念層 | [SQL：概念層到關聯式 Schema](../專案總攬.md#sql概念層到關聯式-schema) | 說明概念層實體如何落實為 MariaDB Schema。 |
+| 預設資料匯入 | [範例資料](../專案總攬.md#範例資料) | 說明如何匯入每張資料表至少 10 筆資料。 |
+| View Schema 與呼叫 | [View Schema 與呼叫](../專案總攬.md#view-schema-與呼叫) | 說明 View 的用途、呼叫方式與 `SHOW CREATE VIEW`。 |
+| 執行與驗證 | [執行方式](../專案總攬.md#執行方式) 與 [驗證結果](../專案總攬.md#驗證結果) | 說明建立資料庫、匯入資料與檢查結果的流程。 |
 
 ## Part3 檔案
 
@@ -19,6 +19,7 @@
 | [範例資料.sql](範例資料.sql) | 匯入 10 張資料表的預設資料。 |
 | [查詢與View範例.sql](查詢與View範例.sql) | 執行概念層查詢、每個 View 的查詢與 `SHOW CREATE VIEW`。 |
 | [驗證說明.md](驗證說明.md) | 記錄 Schema、資料筆數、View 與權限驗證結果。 |
+| [參考資料](參考資料/) | 存放課程指定 PDF 與 PowerPoint 參考來源。 |
 
 ## SQL 概念層對應
 
@@ -134,3 +135,11 @@ Part3 驗證時應確認：
 3. 每張資料表至少匯入 10 筆資料。
 4. Trigger 可阻擋重複教室時段與不合理審核資料。
 5. 學生、教師、管理員 Role 可依權限查詢或操作指定 View 與資料表。
+
+## 參考資料
+
+| 參考資料 | 類型 | 用途 |
+|---|---|---|
+| [Appendix B: Summary of the Database Design](<參考資料/Appendix B Summary of the database design.pdf>) | PDF | 作為資料庫設計摘要與 Schema 架構整理依據。 |
+| [Appendix E: Common Data Models](<參考資料/Appendix E Common data models.pdf>) | PDF | 作為常見資料模型與欄位設計參考。 |
+| [Appendix E 20210511](<參考資料/Appendix E 20210511.pptx>) | PowerPoint | 作為課程指定資料庫設計與展示格式參考。 |

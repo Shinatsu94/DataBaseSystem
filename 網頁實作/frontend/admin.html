@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教室租用系統 - 管理員審核中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans flex flex-col">
+
+    <nav class="bg-indigo-800 text-white p-4 shadow-md z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">教室租用系統 <span class="text-sm font-normal text-indigo-200">| 管理員中心</span></h1>
+            <div class="space-x-4">
+                <span id="adminGreeting" class="text-sm font-medium">載入中...</span>
+                <button onclick="logout()" class="hover:text-indigo-200 text-sm bg-indigo-900 px-3 py-1 rounded">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 max-w-7xl w-full mx-auto">
+        <aside class="w-64 bg-white shadow-md my-6 rounded-lg mr-6 flex flex-col p-4 space-y-2 h-fit border border-gray-100">
+            <div class="text-xs font-bold text-gray-400 mb-2 px-2">管理功能</div>
+            <button onclick="switchTab('pending')" id="tab-pending" class="w-full text-left px-4 py-2 rounded-md bg-indigo-50 text-indigo-700 font-medium transition">📝 待審核清單</button>
+            <button onclick="switchTab('classrooms')" id="tab-classrooms" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">🚪 教室狀態管理</button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">📅 一週課表查詢</button>
+            <button onclick="switchTab('import')" id="tab-import" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">📁 匯入固定課表</button>
+            <button onclick="switchTab('history')" id="tab-history" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">🗄️ 全校借用紀錄</button>
+        </aside>
+
+        <main class="flex-1 my-6 space-y-6">
+            
+            <div id="panel-pending" class="block bg-white p-6 rounded-lg shadow border border-gray-200">
+                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                    <h2 class="text-2xl font-semibold text-gray-800">待審核預約清單</h2>
+                    <button onclick="loadPendingBookings()" class="text-sm text-indigo-600 hover:underline">重新整理</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm"><thead class="bg-gray-50 text-gray-600"><tr>
+                        <th class="py-3 px-4 border-b text-left">單號</th><th class="py-3 px-4 border-b text-left">申請人</th>
+                        <th class="py-3 px-4 border-b text-left">教室</th><th class="py-3 px-4 border-b text-left">日期與節次</th>
+                        <th class="py-3 px-4 border-b text-left">事由</th><th class="py-3 px-4 border-b text-center">操作</th>
+                    </tr></thead><tbody id="pendingTableBody" class="divide-y divide-gray-200"></tbody></table>
+                </div>
+            </div>
+
+            <div id="panel-classrooms" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 border-b pb-2">教室狀態管理</h2>
+                <table class="min-w-full bg-white text-sm"><thead class="bg-gray-50 text-gray-600"><tr>
+                    <th class="py-3 px-4 border-b text-left">教室代碼</th><th class="py-3 px-4 border-b text-left">教室名稱</th>
+                    <th class="py-3 px-4 border-b text-left">容納人數</th><th class="py-3 px-4 border-b text-center">借用狀態</th><th class="py-3 px-4 border-b text-center">切換</th>
+                </tr></thead><tbody id="classroomsTableBody" class="divide-y divide-gray-200"></tbody></table>
+            </div>
+
+            <div id="panel-weekly" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-2 text-gray-800">教室一週課表查詢</h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-sm font-medium text-gray-700">選擇教室</label><select id="ws_classroom_id" class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700">選擇日期 (將自動展開該週)</label><input type="date" id="ws_date" class="w-full border border-gray-300 p-2 rounded mt-1"></div>
+                </div>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="w-full text-sm text-center border-collapse">
+                        <thead id="wsThead" class="bg-gray-100 border-b"></thead>
+                        <tbody id="wsTbody" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="panel-import" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">匯入 CSV 課表並自動排程</h2>
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <p class="text-sm text-yellow-700 font-bold mb-1">CSV 檔案格式要求：</p>
+                    <p class="text-xs text-yellow-600">第一行必須是標題：<code>course_id,academic_year,semester,course_name,teacher_id,classroom_id,day_of_week,start_section_id,end_section_id</code></p>
+                    <p class="text-xs text-yellow-600 mt-1">例如：<code>CS101,113,1,資料庫系統,B13005,BGC0508,1,2,4</code></p>
+                </div>
+                <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-gray-300 rounded p-2 mb-4">
+                <button onclick="uploadCSV()" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 font-medium">開始匯入排程</button>
+            </div>
+
+            <div id="panel-history" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 border-b pb-2">全校借用紀錄 <span class="text-sm font-normal text-gray-500">(包含歷史、退件與取消)</span></h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white text-sm"><thead class="bg-gray-50 text-gray-600"><tr>
+                        <th class="py-3 px-4 border-b text-left">單號 / 建立時間</th><th class="py-3 px-4 border-b text-left">申請人</th>
+                        <th class="py-3 px-4 border-b text-left">教室</th><th class="py-3 px-4 border-b text-left">日期與節次</th>
+                        <th class="py-3 px-4 border-b text-left">事由</th><th class="py-3 px-4 border-b text-center">最終狀態</th>
+                    </tr></thead><tbody id="historyTableBody" class="divide-y divide-gray-200"></tbody></table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4 text-gray-800" id="modalTitle">審核意見</h3>
+            <input type="hidden" id="modalBookingId"><input type="hidden" id="modalAction">
+            <textarea id="reviewComment" rows="4" class="w-full border border-gray-300 rounded p-2 mb-4" placeholder="請填寫審核備註 (退件建議必填，核准可留空)"></textarea>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-medium">取消</button>
+                <button onclick="submitReview()" class="px-4 py-2 bg-indigo-600 text-white rounded font-medium">確認送出</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        const credentials = localStorage.getItem('db_credentials');
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const authHeaders = { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/json' };
+        let globalSections = [];
+
+        if (!credentials) { alert('請先登入！'); window.location.href = 'login.html'; } 
+        else if (userInfo.role !== 'admin') { alert('權限不足！'); window.location.href = 'booking.html'; }
+
+        document.getElementById('adminGreeting').innerText = `管理者：${userInfo.username}`;
+
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+        function switchTab(tabName) {
+            ['pending', 'classrooms', 'weekly', 'import', 'history'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (t === tabName) {
+                    btn.classList.add('bg-indigo-50', 'text-indigo-700', 'font-medium');
+                    btn.classList.remove('text-gray-600');
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-medium');
+                    btn.classList.add('text-gray-600');
+                    panel.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'pending') loadPendingBookings();
+            if (tabName === 'classrooms') loadClassroomsForAdmin();
+            if (tabName === 'history') loadHistoryBookings();
+            if (tabName === 'weekly') {
+                if(!document.getElementById('ws_date').value) document.getElementById('ws_date').value = new Date().toISOString().split('T')[0];
+                fetchWeeklySchedule();
+            }
+        }
+
+        // --- 面板 1: 待審核清單 ---
+        async function loadPendingBookings() {
+            const tbody = document.getElementById('pendingTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-500">載入中...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/bookings/pending`, { headers: authHeaders });
+                const data = await res.json();
+                if (data.data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">🎉 目前沒有待審核的案件</td></tr>'; return; }
+                tbody.innerHTML = '';
+                data.data.forEach(b => {
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-gray-500">#${b.booking_id}</td><td class="py-3 px-4 font-medium">${b.applicant_id}</td>
+                        <td class="py-3 px-4 font-bold text-indigo-600">${b.classroom_id}</td>
+                        <td class="py-3 px-4">${b.booking_date} (第 ${b.start_section_id}~${b.end_section_id} 節)</td>
+                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${b.reason}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="openModal(${b.booking_id}, 'approved')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">核准</button>
+                            <button onclick="openModal(${b.booking_id}, 'rejected')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">退件</button>
+                        </td></tr>`;
+                });
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">連線失敗</td></tr>'; }
+        }
+
+        function openModal(id, action) {
+            document.getElementById('modalBookingId').value = id;
+            document.getElementById('modalAction').value = action;
+            document.getElementById('modalTitle').innerText = action === 'approved' ? '✅ 核准申請' : '❌ 退件申請';
+            document.getElementById('reviewComment').value = '';
+            document.getElementById('reviewModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('reviewModal').classList.add('hidden'); }
+
+        async function submitReview() {
+            const payload = {
+                booking_id: parseInt(document.getElementById('modalBookingId').value),
+                action: document.getElementById('modalAction').value,
+                comment: document.getElementById('reviewComment').value
+            };
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/reviews`, { method: 'POST', headers: authHeaders, body: JSON.stringify(payload) });
+                const data = await res.json();
+                if (res.ok) { alert('✅ ' + data.message); closeModal(); loadPendingBookings(); } else alert('❌ 失敗：' + data.detail);
+            } catch (e) { alert('連線失敗'); }
+        }
+
+        // --- 面板 2: 教室狀態管理 ---
+        async function loadClassroomsForAdmin() {
+            const res = await fetch(`${API_BASE_URL}/api/classrooms`, { headers: authHeaders });
+            const data = await res.json();
+            
+            let optHtml = '<option value="">請選擇教室</option>';
+            data.data.forEach(c => optHtml += `<option value="${c.classroom_id}">${c.classroom_id}</option>`);
+            if(document.getElementById('ws_classroom_id')) document.getElementById('ws_classroom_id').innerHTML = optHtml;
+
+            let html = '';
+            data.data.forEach(c => {
+                let statusBadge = c.is_active ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-bold">已啟用</span>' : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold">已停用</span>';
+                let btnColor = c.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+                let btnText = c.is_active ? '設為停用' : '設為啟用';
+                
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-bold text-indigo-600">${c.classroom_id}</td><td class="py-3 px-4">${c.classroom_name}</td>
+                    <td class="py-3 px-4">${c.capacity} 人</td><td class="py-3 px-4 text-center">${statusBadge}</td>
+                    <td class="py-3 px-4 text-center"><button onclick="toggleClassroomStatus('${c.classroom_id}', ${!c.is_active})" class="px-3 py-1 text-white text-xs rounded ${btnColor} transition">${btnText}</button></td>
+                </tr>`;
+            });
+            document.getElementById('classroomsTableBody').innerHTML = html;
+        }
+
+        async function toggleClassroomStatus(cid, newStatus) {
+            if(!confirm(`確定要將教室 ${cid} ${newStatus ? '啟用' : '停用'} 嗎？`)) return;
+            const res = await fetch(`${API_BASE_URL}/api/admin/classrooms/${cid}/status`, {
+                method: 'PATCH', headers: authHeaders, body: JSON.stringify({ is_active: newStatus })
+            });
+            if (res.ok) { alert('✅ 變更成功'); loadClassroomsForAdmin(); } else { alert('❌ 失敗：' + (await res.json()).detail); }
+        }
+
+        // --- 面板 3: 一週課表查詢 ---
+        async function preloadSections() {
+            const res = await fetch(`${API_BASE_URL}/api/sections`, { headers: authHeaders });
+            globalSections = (await res.json()).data;
+        }
+
+        document.getElementById('ws_classroom_id').addEventListener('change', fetchWeeklySchedule);
+        document.getElementById('ws_date').addEventListener('change', fetchWeeklySchedule);
+
+        function getWeekDates(selectedDateStr) {
+            const date = new Date(selectedDateStr);
+            const day = date.getDay(); 
+            const diffToMonday = date.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(date.setDate(diffToMonday));
+            const weekDates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                weekDates.push(d.toISOString().split('T')[0]);
+            }
+            return weekDates;
+        }
+
+        async function fetchWeeklySchedule() {
+            const cid = document.getElementById('ws_classroom_id').value;
+            const dateStr = document.getElementById('ws_date').value;
+            if (!cid || !dateStr) return;
+
+            const weekDates = getWeekDates(dateStr);
+            let theadHtml = '<tr><th class="p-3 border-b border-r bg-gray-50 w-24">節次</th>';
+            const dayNames = ['一','二','三','四','五','六','日'];
+            weekDates.forEach((d, i) => { theadHtml += `<th class="p-3 border-b text-center w-32">星期${dayNames[i]}<br><span class="text-xs font-normal text-gray-500">${d.substring(5)}</span></th>`; });
+            document.getElementById('wsThead').innerHTML = theadHtml + '</tr>';
+
+            const res = await fetch(`${API_BASE_URL}/api/classrooms/${cid}/weekly_schedule?start_date=${weekDates[0]}&end_date=${weekDates[6]}`);
+            const data = await res.json();
+            
+            const occupiedMap = {};
+            weekDates.forEach(d => occupiedMap[d] = {});
+            
+            data.data.forEach(item => {
+                if (item.type === 'booking') { for (let s = item.start; s <= item.end; s++) occupiedMap[item.date][s] = true; } 
+                else if (item.type === 'course') {
+                    const targetDate = weekDates[item.day_of_week - 1];
+                    for (let s = item.start; s <= item.end; s++) occupiedMap[targetDate][s] = true;
+                }
+            });
+
+            let tbodyHtml = '';
+            globalSections.forEach(sec => {
+                tbodyHtml += `<tr class="hover:bg-gray-50"><td class="p-2 border-r text-center font-bold text-gray-700">第 ${sec.section_id} 節</td>`;
+                weekDates.forEach(d => {
+                    if (occupiedMap[d][sec.section_id]) tbodyHtml += `<td class="p-2 border-b bg-red-50 text-center text-red-500 font-bold text-xs">已排程</td>`;
+                    else tbodyHtml += `<td class="p-2 border-b text-center text-green-500 opacity-30 text-xs">空堂</td>`;
+                });
+                tbodyHtml += '</tr>';
+            });
+            document.getElementById('wsTbody').innerHTML = tbodyHtml;
+        }
+
+        // --- 面板 4: CSV 匯入課表 ---
+        async function uploadCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            if (!fileInput.files[0]) return alert('請先選擇 CSV 檔案！');
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const text = e.target.result;
+                    const res = await fetch(`${API_BASE_URL}/api/admin/courses/import`, {
+                        method: 'POST', headers: authHeaders, body: JSON.stringify({ csv_text: text })
+                    });
+                    const data = await res.json();
+                    if (res.ok) { alert(data.message); fileInput.value = ''; } 
+                    else alert('❌ ' + data.detail);
+                } catch (error) { alert('檔案讀取或上傳失敗'); }
+            };
+            reader.readAsText(fileInput.files[0]);
+        }
+
+        // --- 面板 5: 全校借用歷史紀錄 ---
+        async function loadHistoryBookings() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-500">載入中...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/bookings/history`, { headers: authHeaders });
+                const data = await res.json();
+                if (data.data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">尚無歷史紀錄</td></tr>'; return; }
+                
+                tbody.innerHTML = '';
+                data.data.forEach(b => {
+                    let statusColor = 'bg-gray-100 text-gray-800';
+                    if (b.status_name === '待審核') statusColor = 'bg-yellow-100 text-yellow-800';
+                    if (b.status_name === '已核准') statusColor = 'bg-green-100 text-green-800';
+                    if (b.status_name === '退件' || b.status_name === '已拒絕') statusColor = 'bg-red-100 text-red-800';
+
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4"><span class="text-gray-500">#${b.booking_id}</span><br><span class="text-xs text-gray-400">${b.created_at.substring(0,16)}</span></td>
+                        <td class="py-3 px-4 font-medium">${b.applicant_id}</td>
+                        <td class="py-3 px-4 font-bold text-indigo-600">${b.classroom_id}</td>
+                        <td class="py-3 px-4">${b.booking_date} (第 ${b.start_section_id}~${b.end_section_id} 節)</td>
+                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${b.reason}</td>
+                        <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${b.status_name}</span></td>
+                    </tr>`;
+                });
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">連線失敗</td></tr>'; }
+        }
+
+        window.onload = () => { preloadSections(); loadPendingBookings(); loadClassroomsForAdmin(); };
+    </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教室租用系統 - 預約管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-5
+ min-h-screen font-sans flex flex-col">
+
+    <nav class="bg-blue-600 text-white p-4 shadow-md z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">教室租用系統</h1>
+            <div class="space-x-4">
+                <span id="userGreeting" class="text-sm font-medium">載入中...</span>
+                <button onclick="logout()" class="hover:text-blue-200 text-sm bg-blue-700 px-3 py-1 rounded">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 max-w-7xl w-full mx-auto">
+        <aside class="w-64 bg-white shadow-md my-6 rounded-lg mr-6 flex flex-col p-4 space-y-2 h-fit border border-gray-100">
+            <div class="text-xs font-bold text-gray-400 mb-2 px-2">主要功能</div>
+            <button onclick="switchTab('single')" id="tab-single" class="w-full text-left px-4 py-2 rounded-md bg-blue-50 text-blue-700 font-medium">📝 單次預約</button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50">📅 一週課表查詢</button>
+            <button onclick="switchTab('longterm')" id="tab-longterm" class="hidden w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50">📆 長期借用</button>
+            <button onclick="switchTab('courses')" id="tab-courses" class="hidden w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50">📚 我的課程</button>
+            <button onclick="switchTab('notifications'); loadNotifications();" id="tab-notifications" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50">🔔 通知中心</button>
+        </aside>
+
+        <main class="flex-1 my-6 space-y-6">
+            
+            <div id="panel-single" class="block space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">新增單次借用</h2>
+                    <form id="bookingForm" class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium text-gray-700">選擇教室</label><select id="classroom_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">借用日期</label><input type="date" id="booking_date" required class="w-full border border-gray-300 p-2 rounded mt-1"></div>
+                        <div id="schedulePreviewContainer" class="col-span-2 hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">📅 當日空堂預覽 <span class="text-xs font-normal text-gray-500">(綠色可借用，紅色已排課或被預約)</span></label>
+                            <div id="scheduleGrid" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div><label class="block text-sm font-medium text-gray-700">開始節次</label><select id="start_section_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">結束節次</label><select id="end_section_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div class="col-span-2"><label class="block text-sm font-medium text-gray-700">借用事由</label><textarea id="reason" required class="w-full border border-gray-300 p-2 rounded mt-1"></textarea></div>
+                        <div class="col-span-2 text-right"><button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">送出申請</button></div>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">單次預約紀錄</h2>
+                    <table class="w-full text-sm text-left"><thead class="bg-gray-50"><tr><th class="p-2 border-b">單號</th><th class="p-2 border-b">教室</th><th class="p-2 border-b">日期/節次</th><th class="p-2 border-b">狀態</th><th class="p-2 border-b text-center">操作</th></tr></thead>
+                    <tbody id="bookingsTableBody" class="divide-y divide-gray-100"></tbody></table>
+                </div>
+            </div>
+
+            <div id="panel-weekly" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">教室一週課表查詢</h2>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="block text-sm font-medium text-gray-700">選擇教室</label><select id="ws_classroom_id" class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">選擇日期 (將自動展開該週)</label><input type="date" id="ws_date" class="w-full border border-gray-300 p-2 rounded mt-1"></div>
+                    </div>
+                    <div class="overflow-x-auto border rounded-lg">
+                        <table class="w-full text-sm text-center border-collapse">
+                            <thead id="wsThead" class="bg-gray-100 border-b"></thead>
+                            <tbody id="wsTbody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-longterm" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">新增週期性借用</h2>
+                    <form id="longTermForm" class="grid grid-cols-3 gap-4">
+                        <div><label class="block text-sm font-medium text-gray-700">選擇教室</label><select id="lt_classroom_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">開始日期</label><input type="date" id="lt_start_date" required class="w-full border border-gray-300 p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">結束日期</label><input type="date" id="lt_end_date" required class="w-full border border-gray-300 p-2 rounded mt-1"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">星期幾</label>
+                            <select id="lt_day_of_week" required class="w-full border border-gray-300 p-2 rounded mt-1">
+                                <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option>
+                                <option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="7">星期日</option>
+                            </select>
+                        </div>
+                        <div><label class="block text-sm font-medium text-gray-700">開始節次</label><select id="lt_start_section_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div><label class="block text-sm font-medium text-gray-700">結束節次</label><select id="lt_end_section_id" required class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
+                        <div class="col-span-3"><label class="block text-sm font-medium text-gray-700">借用事由</label><textarea id="lt_reason" required class="w-full border border-gray-300 p-2 rounded mt-1"></textarea></div>
+                        <div class="col-span-3 text-right"><button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow">送出週期性申請</button></div>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">週期性借用紀錄</h2>
+                    <table class="w-full text-sm text-left"><thead class="bg-gray-50"><tr><th class="p-2 border-b">教室</th><th class="p-2 border-b">期間</th><th class="p-2 border-b">星期</th><th class="p-2 border-b">狀態</th></tr></thead>
+                    <tbody id="ltTableBody" class="divide-y divide-gray-100"></tbody></table>
+                </div>
+            </div>
+
+            <div id="panel-notifications" class="hidden">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">通知中心</h2>
+                    <div id="notificationList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div id="panel-courses" class="hidden">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">我的課程</h2>
+                    <p class="text-gray-500">本學期課程列表...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        const credentials = localStorage.getItem('db_credentials');
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        const authHeaders = { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/json' };
+        
+        let globalSections = []; 
+
+        if (!credentials) { alert('請先登入！'); window.location.href = 'login.html'; }
+        
+        let showRole = userInfo.role === 'student' ? '使用者' : '老師';
+        document.getElementById('userGreeting').innerText = `使用者：${userInfo.username} (${showRole})`;
+
+        if (userInfo.role === 'teacher') {
+            document.getElementById('tab-longterm').classList.remove('hidden');
+            document.getElementById('tab-courses').classList.remove('hidden');
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+        function switchTab(tabName) {
+            ['single', 'weekly', 'longterm', 'courses', 'notifications'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if(btn && panel) {
+                    if (t === tabName) {
+                        btn.classList.add('bg-blue-50', 'text-blue-700', 'font-medium');
+                        btn.classList.remove('text-gray-600');
+                        panel.classList.remove('hidden');
+                    } else {
+                        btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium');
+                        btn.classList.add('text-gray-600');
+                        panel.classList.add('hidden');
+                    }
+                }
+            });
+            if (tabName === 'longterm') loadLongTermBookings();
+            if (tabName === 'weekly') {
+                if(!document.getElementById('ws_date').value) document.getElementById('ws_date').value = new Date().toISOString().split('T')[0];
+                fetchWeeklySchedule();
+            }
+        }
+
+        async function loadOptions() {
+            const [clsRes, secRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/classrooms`, { headers: authHeaders }),
+                fetch(`${API_BASE_URL}/api/sections`, { headers: authHeaders })
+            ]);
+            
+            const clsData = await clsRes.json();
+            let clsHtml = '<option value="">請選擇</option>';
+            clsData.data.forEach(c => clsHtml += `<option value="${c.classroom_id}">${c.classroom_id}</option>`);
+            
+            ['classroom_id', 'ws_classroom_id', 'lt_classroom_id'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).innerHTML = clsHtml;
+            });
+
+            const secData = await secRes.json();
+            globalSections = secData.data; 
+            
+            let secHtml = '<option value="">請選擇</option>';
+            secData.data.forEach(s => secHtml += `<option value="${s.section_id}">第 ${s.section_id} 節</option>`);
+            ['start_section_id', 'end_section_id', 'lt_start_section_id', 'lt_end_section_id'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).innerHTML = secHtml;
+            });
+        }
+
+        document.getElementById('classroom_id').addEventListener('change', fetchDailySchedule);
+        document.getElementById('booking_date').addEventListener('change', fetchDailySchedule);
+
+        async function fetchDailySchedule() {
+            const cid = document.getElementById('classroom_id').value;
+            const date = document.getElementById('booking_date').value;
+            const container = document.getElementById('schedulePreviewContainer');
+            const grid = document.getElementById('scheduleGrid');
+
+            if (!cid || !date) { container.classList.add('hidden'); return; }
+            container.classList.remove('hidden');
+            grid.innerHTML = '<span class="text-sm text-gray-500">查詢中...</span>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/classrooms/${cid}/schedule?query_date=${date}`);
+                if (!res.ok) throw new Error('查詢失敗');
+                const data = await res.json();
+                let occupiedSet = new Set();
+                data.data.forEach(slot => { for(let i = slot.start; i <= slot.end; i++) occupiedSet.add(i); });
+
+                grid.innerHTML = '';
+                globalSections.forEach(sec => {
+                    const isOccupied = occupiedSet.has(sec.section_id);
+                    const colorClass = isOccupied ? 'bg-red-100 text-red-700 border-red-200 opacity-75' : 'bg-green-100 text-green-800 border-green-300';
+                    grid.innerHTML += `<div class="border w-24 py-2 rounded text-center shadow-sm ${colorClass}">
+                                           <div class="font-bold text-sm">${isOccupied ? '❌' : '✅'} 第 ${sec.section_id} 節</div>
+                                           <div class="text-xs mt-1 opacity-80">${sec.start_time.substring(0,5)}</div>
+                                       </div>`;
+                });
+            } catch (e) { grid.innerHTML = '<span class="text-sm text-red-500">無法取得課表</span>'; }
+        }
+
+        document.getElementById('ws_classroom_id').addEventListener('change', fetchWeeklySchedule);
+        document.getElementById('ws_date').addEventListener('change', fetchWeeklySchedule);
+
+        function getWeekDates(selectedDateStr) {
+            const date = new Date(selectedDateStr);
+            const day = date.getDay(); 
+            const diffToMonday = date.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(date.setDate(diffToMonday));
+            
+            const weekDates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                weekDates.push(d.toISOString().split('T')[0]);
+            }
+            return weekDates;
+        }
+
+        async function fetchWeeklySchedule() {
+            const cid = document.getElementById('ws_classroom_id').value;
+            const dateStr = document.getElementById('ws_date').value;
+            if (!cid || !dateStr) return;
+
+            const weekDates = getWeekDates(dateStr);
+            const startDate = weekDates[0];
+            const endDate = weekDates[6];
+
+            let theadHtml = '<tr><th class="p-3 border-b border-r bg-gray-50 w-24">節次</th>';
+            const dayNames = ['一','二','三','四','五','六','日'];
+            weekDates.forEach((d, i) => {
+                theadHtml += `<th class="p-3 border-b text-center w-32">星期${dayNames[i]}<br><span class="text-xs font-normal text-gray-500">${d.substring(5)}</span></th>`;
+            });
+            theadHtml += '</tr>';
+            document.getElementById('wsThead').innerHTML = theadHtml;
+
+            const res = await fetch(`${API_BASE_URL}/api/classrooms/${cid}/weekly_schedule?start_date=${startDate}&end_date=${endDate}`);
+            const data = await res.json();
+            
+            const occupiedMap = {};
+            weekDates.forEach(d => occupiedMap[d] = {});
+            
+            data.data.forEach(item => {
+                if (item.type === 'booking') {
+                    for (let s = item.start; s <= item.end; s++) if(occupiedMap[item.date]) occupiedMap[item.date][s] = true;
+                } else if (item.type === 'course') {
+                    const targetDate = weekDates[item.day_of_week - 1]; 
+                    for (let s = item.start; s <= item.end; s++) if(occupiedMap[targetDate]) occupiedMap[targetDate][s] = true;
+                }
+            });
+
+            let tbodyHtml = '';
+            globalSections.forEach(sec => {
+                tbodyHtml += `<tr class="hover:bg-gray-50 transition"><td class="p-2 border-r text-center font-bold bg-white text-gray-700">第 ${sec.section_id} 節<br><span class="text-xs font-normal text-gray-400">${sec.start_time.substring(0,5)}</span></td>`;
+                weekDates.forEach(d => {
+                    if (occupiedMap[d][sec.section_id]) {
+                        tbodyHtml += `<td class="p-2 border-b bg-red-50 text-center text-red-500 font-bold">已佔用</td>`;
+                    } else {
+                        tbodyHtml += `<td class="p-2 border-b text-center text-green-500 opacity-30 text-xs">空堂</td>`;
+                    }
+                });
+                tbodyHtml += '</tr>';
+            });
+            document.getElementById('wsTbody').innerHTML = tbodyHtml;
+        }
+
+        async function loadMyBookings() {
+            const res = await fetch(`${API_BASE_URL}/api/bookings`, { headers: authHeaders });
+            const data = await res.json();
+            let html = '';
+            data.data.forEach(b => {
+                let cancelBtn = b.status_code === 'pending' ? `<button onclick="cancelBooking(${b.booking_id})" class="text-red-600 font-medium hover:underline">取消申請</button>` : '-';
+                html += `<tr><td class="p-3 text-gray-500">#${b.booking_id}</td><td class="p-3 font-semibold text-blue-600">${b.classroom_id}</td>
+                         <td class="p-3">${b.booking_date} (${b.start_section_id}~${b.end_section_id})</td>
+                         <td class="p-3"><span class="px-2 py-1 bg-gray-100 rounded text-xs">${b.status_name}</span></td>
+                         <td class="p-3 text-center">${cancelBtn}</td></tr>`;
+            });
+            document.getElementById('bookingsTableBody').innerHTML = html || '<tr><td colspan="5" class="p-4 text-center text-gray-500">無紀錄</td></tr>';
+        }
+
+        async function cancelBooking(id) {
+            if(!confirm('確定要取消這個預約嗎？')) return;
+            const res = await fetch(`${API_BASE_URL}/api/bookings/${id}/cancel`, { method: 'PATCH', headers: authHeaders });
+            if (res.ok) { alert('已取消！'); loadMyBookings(); } else { alert('取消失敗！'); }
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = { classroom_id: document.getElementById('classroom_id').value, booking_date: document.getElementById('booking_date').value, start_section_id: parseInt(document.getElementById('start_section_id').value), end_section_id: parseInt(document.getElementById('end_section_id').value), reason: document.getElementById('reason').value };
+            const res = await fetch(`${API_BASE_URL}/api/bookings`, { method: 'POST', headers: authHeaders, body: JSON.stringify(payload) });
+            if (res.ok) { alert('✅ 申請成功'); document.getElementById('bookingForm').reset(); fetchDailySchedule(); loadMyBookings(); } 
+            else alert('❌ 失敗：' + (await res.json()).detail);
+        });
+
+        async function loadNotifications() {
+            const res = await fetch(`${API_BASE_URL}/api/notifications`, { headers: authHeaders });
+            const data = await res.json();
+            let html = '';
+            data.data.forEach(n => {
+                let bg = n.is_read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500';
+                let btn = n.is_read ? '' : `<button onclick="markRead(${n.id})" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded mt-3 shadow-sm transition">標記已讀</button>`;
+                html += `<div class="p-4 rounded-lg shadow-sm border ${bg}"><p class="text-sm text-gray-800 leading-relaxed">${n.message}</p><p class="text-xs text-gray-400 mt-2">${n.created_at}</p>${btn}</div>`;
+            });
+            document.getElementById('notificationList').innerHTML = html || '<p class="text-gray-500 text-center py-4">目前沒有新通知 🎉</p>';
+        }
+
+        async function markRead(id) {
+            await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, { method: 'PATCH', headers: authHeaders });
+            loadNotifications();
+        }
+
+        window.onload = () => { loadOptions(); loadMyBookings(); };
+    </script>
+</body>
+</html>

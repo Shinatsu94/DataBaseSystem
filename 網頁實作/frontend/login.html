@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教室租用系統 - 身分選擇</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-center text-blue-600 mb-2">教室租用系統</h1>
+        <p class="text-sm text-gray-400 text-center mb-8">免輸入帳密，請直接選擇您的模擬身分進入系統</p>
+
+        <div class="space-y-4">
+            <button onclick="loginAs('student')" class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 rounded-xl transition shadow-sm group">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl">👤</span>
+                    <div class="text-left">
+                        <div class="font-bold text-lg text-blue-800">一般使用者 (學生)</div>
+                        <div class="text-xs text-blue-600 opacity-70" id="txt-student-info">載入預設帳號中...</div>
+                    </div>
+                </div>
+                <span class="text-blue-500 font-bold group-hover:translate-x-1 transition-transform">點擊進入 ➔</span>
+            </button>
+
+            <button onclick="loginAs('teacher')" class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 rounded-xl transition shadow-sm group">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl">🎓</span>
+                    <div class="text-left">
+                        <div class="font-bold text-lg text-green-800">授課老師</div>
+                        <div class="text-xs text-green-600 opacity-70" id="txt-teacher-info">載入預設帳號中...</div>
+                    </div>
+                </div>
+                <span class="text-green-500 font-bold group-hover:translate-x-1 transition-transform">點擊進入 ➔</span>
+            </button>
+
+            <button onclick="loginAs('admin')" class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 rounded-xl transition shadow-sm group">
+                <div class="flex items-center space-x-4">
+                    <span class="text-3xl">🛠️</span>
+                    <div class="text-left">
+                        <div class="font-bold text-lg text-indigo-800">系統管理者</div>
+                        <div class="text-xs text-indigo-600 opacity-70" id="txt-admin-info">載入預設帳號中...</div>
+                    </div>
+                </div>
+                <span class="text-indigo-500 font-bold group-hover:translate-x-1 transition-transform">點擊進入 ➔</span>
+            </button>
+        </div>
+
+        <details class="mt-8 border-t pt-4 border-gray-100">
+            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600 text-center select-none">⚙️ 變更預設測試帳密設定</summary>
+            <div class="grid grid-cols-3 gap-2 mt-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1">
+                <div class="col-span-3 font-bold text-gray-500 mb-1">自訂快速登入的資料庫基本憑證：</div>
+                <div>
+                    <label class="block font-medium text-gray-600">使用者學號</label>
+                    <input type="text" id="cfg_student_id" value="41243149" class="w-full border p-1 rounded mt-0.5">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600">老師工號</label>
+                    <input type="text" id="cfg_teacher_id" value="B13005" class="w-full border p-1 rounded mt-0.5">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600">管理者工號</label>
+                    <input type="text" id="cfg_admin_id" value="E13006" class="w-full border p-1 rounded mt-0.5">
+                </div>
+                <div class="col-span-3">
+                    <label class="block font-medium text-gray-600">上述帳號在 MariaDB 中的通用密碼</label>
+                    <input type="password" id="cfg_password" value="1234567890" class="w-full border p-1.5 rounded mt-0.5">
+                    <p class="text-[10px] text-gray-400 mt-1">※ 密碼請填寫您當初在資料庫執行 GRANT 或是透過註冊開戶時設定的真實密 MariaDB 密碼。</p>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // 動態更新介面上的預設帳號資訊提示
+        function updateInfoUI() {
+            document.getElementById('txt-student-info').innerText = `模擬帳號: ${document.getElementById('cfg_student_id').value}`;
+            document.getElementById('txt-teacher-info').innerText = `模擬帳號: ${document.getElementById('cfg_teacher_id').value}`;
+            document.getElementById('txt-admin-info').innerText = `模擬帳號: ${document.getElementById('cfg_admin_id').value}`;
+        }
+
+        // 綁定欄位輸入事件，即時同步顯示
+        ['cfg_student_id', 'cfg_teacher_id', 'cfg_admin_id'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateInfoUI);
+        });
+
+        // 核心一鍵登入邏輯
+        async function loginAs(roleType) {
+            let userId = '';
+            const password = document.getElementById('cfg_password').value;
+
+            // 根據選取的角色，自動抓取對應的預設帳號
+            if (roleType === 'student') userId = document.getElementById('cfg_student_id').value;
+            if (roleType === 'teacher') userId = document.getElementById('cfg_teacher_id').value;
+            if (roleType === 'admin') userId = document.getElementById('cfg_admin_id').value;
+
+            if (!userId || !password) {
+                alert('請確認基礎設定中的帳號與密碼皆有填寫！');
+                return;
+            }
+
+            // 將對應帳密轉為加密 Base64，發送給後端做真實的 MariaDB 連線與 Role 啟用
+            const credentials = btoa(`${userId}:${password}`);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Basic ${credentials}` }
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    const username = data.user ? data.user.username : '使用者';
+                    const dbRole = data.user ? data.user.role : '';
+                    
+                    let roleChinese = '使用者';
+                    if (dbRole === 'admin') roleChinese = '管理者';
+                    if (dbRole === 'teacher') roleChinese = '老師';
+
+                    alert(`✅ 快速登入成功！歡迎 ${username} (${roleChinese})`);
+                    
+                    // 將連線認證快取到瀏覽器，供後續借用、審核 API 正常串接
+                    localStorage.setItem('db_credentials', credentials);
+                    localStorage.setItem('user_info', JSON.stringify(data.user || {username: username, role: dbRole}));
+                    
+                    // 身分路由分流跳轉
+                    if (dbRole === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'booking.html';
+                    }
+                } else {
+                    alert('❌ 登入失敗：' + (data.detail || '帳號不存在或密碼錯誤，請展開下方設定檢查您的 MariaDB 帳密配置。'));
+                }
+            } catch (error) {
+                alert('連線至後端伺服器失敗，請確認 FastAPI 服務是否已正常開啟。');
+            }
+        }
+
+        // 初始化顯示
+        window.onload = updateInfoUI;
+    </script>
+</body>
+</html>

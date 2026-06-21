@@ -1,0 +1,17 @@
+-- 1. 建立學生測試帳號
+CREATE USER IF NOT EXISTS '41243149'@'localhost' IDENTIFIED BY '1234567890';
+GRANT classroom_student_role TO '41243149'@'localhost';
+SET DEFAULT ROLE classroom_student_role FOR '41243149'@'localhost';
+
+-- 2. 建立老師測試帳號
+CREATE USER IF NOT EXISTS 'B13005'@'localhost' IDENTIFIED BY '1234567890';
+GRANT classroom_teacher_role TO 'B13005'@'localhost';
+SET DEFAULT ROLE classroom_teacher_role FOR 'B13005'@'localhost';
+
+-- 3. 建立管理員測試帳號
+CREATE USER IF NOT EXISTS 'E13006'@'localhost' IDENTIFIED BY '1234567890';
+GRANT classroom_admin_role TO 'E13006'@'localhost';
+SET DEFAULT ROLE classroom_admin_role FOR 'E13006'@'localhost';
+
+-- (重要) 刷新權限讓設定立即生效
+FLUSH PRIVILEGES;

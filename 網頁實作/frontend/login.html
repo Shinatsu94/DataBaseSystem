@@ -57,16 +57,16 @@
                 </div>
                 <div>
                     <label class="block font-medium text-gray-600">老師工號</label>
-                    <input type="text" id="cfg_teacher_id" value="B13005" class="w-full border p-1 rounded mt-0.5">
+                    <input type="text" id="cfg_teacher_id" value="b13005" class="w-full border p-1 rounded mt-0.5">
                 </div>
                 <div>
                     <label class="block font-medium text-gray-600">管理者工號</label>
-                    <input type="text" id="cfg_admin_id" value="E13006" class="w-full border p-1 rounded mt-0.5">
+                    <input type="text" id="cfg_admin_id" value="e13006" class="w-full border p-1 rounded mt-0.5">
                 </div>
                 <div class="col-span-3">
                     <label class="block font-medium text-gray-600">上述帳號在 MariaDB 中的通用密碼</label>
                     <input type="password" id="cfg_password" value="1234567890" class="w-full border p-1.5 rounded mt-0.5">
-                    <p class="text-[10px] text-gray-400 mt-1">※ 密碼請填寫您當初在資料庫執行 GRANT 或是透過註冊開戶時設定的真實密 MariaDB 密碼。</p>
+                    <p class="text-[10px] text-gray-400 mt-1">※ 密碼請填寫您當初在資料庫執行 GRANT 或是透過註冊開戶時設定的真實 MariaDB 密碼。</p>
                 </div>
             </div>
         </details>
@@ -75,24 +75,20 @@
     <script>
         const API_BASE_URL = 'http://127.0.0.1:8000';
 
-        // 動態更新介面上的預設帳號資訊提示
         function updateInfoUI() {
             document.getElementById('txt-student-info').innerText = `模擬帳號: ${document.getElementById('cfg_student_id').value}`;
             document.getElementById('txt-teacher-info').innerText = `模擬帳號: ${document.getElementById('cfg_teacher_id').value}`;
             document.getElementById('txt-admin-info').innerText = `模擬帳號: ${document.getElementById('cfg_admin_id').value}`;
         }
 
-        // 綁定欄位輸入事件，即時同步顯示
         ['cfg_student_id', 'cfg_teacher_id', 'cfg_admin_id'].forEach(id => {
             document.getElementById(id).addEventListener('input', updateInfoUI);
         });
 
-        // 核心一鍵登入邏輯
         async function loginAs(roleType) {
             let userId = '';
             const password = document.getElementById('cfg_password').value;
 
-            // 根據選取的角色，自動抓取對應的預設帳號
             if (roleType === 'student') userId = document.getElementById('cfg_student_id').value;
             if (roleType === 'teacher') userId = document.getElementById('cfg_teacher_id').value;
             if (roleType === 'admin') userId = document.getElementById('cfg_admin_id').value;
@@ -102,7 +98,8 @@
                 return;
             }
 
-            // 將對應帳密轉為加密 Base64，發送給後端做真實的 MariaDB 連線與 Role 啟用
+            // 強制轉小寫以符合 Schema 限制
+            userId = userId.toLowerCase().trim();
             const credentials = btoa(`${userId}:${password}`);
 
             try {
@@ -122,25 +119,22 @@
 
                     alert(`✅ 快速登入成功！歡迎 ${username} (${roleChinese})`);
                     
-                    // 將連線認證快取到瀏覽器，供後續借用、審核 API 正常串接
                     localStorage.setItem('db_credentials', credentials);
                     localStorage.setItem('user_info', JSON.stringify(data.user || {username: username, role: dbRole}));
                     
-                    // 身分路由分流跳轉
                     if (dbRole === 'admin') {
                         window.location.href = 'admin.html';
                     } else {
                         window.location.href = 'booking.html';
                     }
                 } else {
-                    alert('❌ 登入失敗：' + (data.detail || '帳號不存在或密碼錯誤，請展開下方設定檢查您的 MariaDB 帳密配置。'));
+                    alert('❌ 登入失敗：' + (data.detail || '帳號不存在或密碼錯誤。'));
                 }
             } catch (error) {
                 alert('連線至後端伺服器失敗，請確認 FastAPI 服務是否已正常開啟。');
             }
         }
 
-        // 初始化顯示
         window.onload = updateInfoUI;
     </script>
 </body>

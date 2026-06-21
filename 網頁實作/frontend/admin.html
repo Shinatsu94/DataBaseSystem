@@ -23,7 +23,7 @@
             <div class="text-xs font-bold text-gray-400 mb-2 px-2">管理功能</div>
             <button onclick="switchTab('pending')" id="tab-pending" class="w-full text-left px-4 py-2 rounded-md bg-indigo-50 text-indigo-700 font-medium transition">📝 待審核清單</button>
             <button onclick="switchTab('classrooms')" id="tab-classrooms" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">🚪 教室狀態管理</button>
-            <button onclick="switchTab('weekly')" id="tab-weekly" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">📅 一週課表查詢</button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">📅 一週教室使用狀況</button>
             <button onclick="switchTab('import')" id="tab-import" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">📁 匯入固定課表</button>
             <button onclick="switchTab('history')" id="tab-history" class="w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 transition">🗄️ 全校借用紀錄</button>
         </aside>
@@ -53,7 +53,7 @@
             </div>
 
             <div id="panel-weekly" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2 text-gray-800">教室一週課表查詢</h2>
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-2 text-gray-800">教室一週使用狀況</h2>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="block text-sm font-medium text-gray-700">選擇教室</label><select id="ws_classroom_id" class="w-full border border-gray-300 p-2 rounded mt-1"></select></div>
                     <div><label class="block text-sm font-medium text-gray-700">選擇日期 (將自動展開該週)</label><input type="date" id="ws_date" class="w-full border border-gray-300 p-2 rounded mt-1"></div>
@@ -104,6 +104,14 @@
     </div>
 
     <script>
+        // XSS 防護跳脫函式
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
         const API_BASE_URL = 'http://127.0.0.1:8000';
         const credentials = localStorage.getItem('db_credentials');
         const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
@@ -155,7 +163,7 @@
                         <td class="py-3 px-4 text-gray-500">#${b.booking_id}</td><td class="py-3 px-4 font-medium">${b.applicant_id}</td>
                         <td class="py-3 px-4 font-bold text-indigo-600">${b.classroom_id}</td>
                         <td class="py-3 px-4">${b.booking_date} (第 ${b.start_section_id}~${b.end_section_id} 節)</td>
-                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${b.reason}</td>
+                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${escapeHTML(b.reason)}</td>
                         <td class="py-3 px-4 text-center">
                             <button onclick="openModal(${b.booking_id}, 'approved')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">核准</button>
                             <button onclick="openModal(${b.booking_id}, 'rejected')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">退件</button>
@@ -244,38 +252,77 @@
         async function fetchWeeklySchedule() {
             const cid = document.getElementById('ws_classroom_id').value;
             const dateStr = document.getElementById('ws_date').value;
-            if (!cid || !dateStr) return;
+            if (!dateStr) return;
 
             const weekDates = getWeekDates(dateStr);
             let theadHtml = '<tr><th class="p-3 border-b border-r bg-gray-50 w-24">節次</th>';
             const dayNames = ['一','二','三','四','五','六','日'];
-            weekDates.forEach((d, i) => { theadHtml += `<th class="p-3 border-b text-center w-32">星期${dayNames[i]}<br><span class="text-xs font-normal text-gray-500">${d.substring(5)}</span></th>`; });
+            weekDates.forEach((d, i) => {
+                theadHtml += `<th class="p-3 border-b text-center w-32">星期${dayNames[i]}<br><span class="text-xs font-normal text-gray-500">${d.substring(5)}</span></th>`;
+            });
             document.getElementById('wsThead').innerHTML = theadHtml + '</tr>';
 
-            const res = await fetch(`${API_BASE_URL}/api/classrooms/${cid}/weekly_schedule?start_date=${weekDates[0]}&end_date=${weekDates[6]}`);
-            const data = await res.json();
-            
-            const occupiedMap = {};
-            weekDates.forEach(d => occupiedMap[d] = {});
-            
-            data.data.forEach(item => {
-                if (item.type === 'booking') { for (let s = item.start; s <= item.end; s++) occupiedMap[item.date][s] = true; } 
-                else if (item.type === 'course') {
-                    const targetDate = weekDates[item.day_of_week - 1];
-                    for (let s = item.start; s <= item.end; s++) occupiedMap[targetDate][s] = true;
-                }
-            });
+            const tbody = document.getElementById('wsTbody');
 
-            let tbodyHtml = '';
-            globalSections.forEach(sec => {
-                tbodyHtml += `<tr class="hover:bg-gray-50"><td class="p-2 border-r text-center font-bold text-gray-700">第 ${sec.section_id} 節</td>`;
-                weekDates.forEach(d => {
-                    if (occupiedMap[d][sec.section_id]) tbodyHtml += `<td class="p-2 border-b bg-red-50 text-center text-red-500 font-bold text-xs">已排程</td>`;
-                    else tbodyHtml += `<td class="p-2 border-b text-center text-green-500 opacity-30 text-xs">空堂</td>`;
+            // 1. 若未選擇教室，渲染提示骨架
+            if (!cid) {
+                let tbodyHtml = '';
+                globalSections.forEach(sec => {
+                    tbodyHtml += `<tr class="hover:bg-gray-50"><td class="p-2 border-r text-center font-bold text-gray-700">第 ${sec.section_id} 節<br><span class="text-xs font-normal text-gray-400">${sec.start_time ? sec.start_time.substring(0,5) : ''}</span></td>`;
+                    weekDates.forEach(() => {
+                        tbodyHtml += `<td class="p-2 border-b text-center text-gray-400 text-xs bg-gray-50">請選擇教室</td>`;
+                    });
+                    tbodyHtml += '</tr>';
                 });
-                tbodyHtml += '</tr>';
-            });
-            document.getElementById('wsTbody').innerHTML = tbodyHtml;
+                tbody.innerHTML = tbodyHtml;
+                return;
+            }
+
+            // 2. 清空舊畫面，顯示載入中動畫 (證明程式有往下跑)
+            tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-blue-500 font-bold">🔄 正在向後端載入 ${cid} 的課表資料...</td></tr>`;
+
+            try {
+                // 3. 向後端發送請求
+                const res = await fetch(`${API_BASE_URL}/api/classrooms/${cid}/weekly_schedule?start_date=${weekDates[0]}&end_date=${weekDates[6]}`);
+                
+                // 檢查後端是否回傳 400 或 500 錯誤
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || '後端發生未知錯誤');
+                }
+                
+                const data = await res.json();
+                const occupiedMap = {};
+                weekDates.forEach(d => occupiedMap[d] = {});
+                
+                data.data.forEach(item => {
+                    if (item.type === 'booking') {
+                        for (let s = item.start; s <= item.end; s++) if(occupiedMap[item.date]) occupiedMap[item.date][s] = true;
+                    } else if (item.type === 'course') {
+                        const targetDate = weekDates[item.day_of_week - 1]; 
+                        for (let s = item.start; s <= item.end; s++) if(occupiedMap[targetDate]) occupiedMap[targetDate][s] = true;
+                    }
+                });
+
+                // 4. 成功取得資料，渲染課表
+                let tbodyHtml = '';
+                globalSections.forEach(sec => {
+                    tbodyHtml += `<tr class="hover:bg-gray-50 transition"><td class="p-2 border-r text-center font-bold bg-white text-gray-700">第 ${sec.section_id} 節<br><span class="text-xs font-normal text-gray-400">${sec.start_time ? sec.start_time.substring(0,5) : ''}</span></td>`;
+                    weekDates.forEach(d => {
+                        if (occupiedMap[d][sec.section_id]) {
+                            tbodyHtml += `<td class="p-2 border-b bg-red-50 text-center text-red-500 font-bold">已排程</td>`;
+                        } else {
+                            tbodyHtml += `<td class="p-2 border-b text-center text-green-500 opacity-30 text-xs">空堂</td>`;
+                        }
+                    });
+                    tbodyHtml += '</tr>';
+                });
+                tbody.innerHTML = tbodyHtml;
+
+            } catch (error) {
+                // 5. 如果發生錯誤，把紅字印在畫面上，不再默默當機
+                tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-red-500 font-bold">❌ 查詢失敗：${error.message}<br><span class="text-sm font-normal text-gray-400">（請檢查 MariaDB 是否有建立 api_admin 帳號，或看後端 Terminal 的報錯）</span></td></tr>`;
+            }
         }
 
         // --- 面板 4: CSV 匯入課表 ---
@@ -319,7 +366,7 @@
                         <td class="py-3 px-4 font-medium">${b.applicant_id}</td>
                         <td class="py-3 px-4 font-bold text-indigo-600">${b.classroom_id}</td>
                         <td class="py-3 px-4">${b.booking_date} (第 ${b.start_section_id}~${b.end_section_id} 節)</td>
-                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${b.reason}</td>
+                        <td class="py-3 px-4 text-gray-600 truncate max-w-xs">${escapeHTML(b.reason)}</td>
                         <td class="py-3 px-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${b.status_name}</span></td>
                     </tr>`;
                 });

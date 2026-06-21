@@ -1,6 +1,7 @@
 # 教室租用系統 - 核心 API 完整版
 import re
 import csv
+import os
 from io import StringIO
 from datetime import date
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -23,11 +24,14 @@ app.add_middleware(
 )
 
 security = HTTPBasic()
-SYSTEM_ADMIN_URL = "mysql+aiomysql://api_admin:1234567890@localhost:3306/classroom_rental"
+# 從環境變數讀取資料庫連線字串，避免機密外洩 (正式環境建議移除預設值)
+SYSTEM_ADMIN_URL = os.getenv(
+    "DB_ADMIN_URL", 
+    "mysql+aiomysql://api_admin:1234567890@localhost:3306/classroom_rental"
+)
 admin_engine = create_async_engine(SYSTEM_ADMIN_URL, echo=False, poolclass=NullPool)
 AdminSessionLocal = sessionmaker(admin_engine, class_=AsyncSession, expire_on_commit=False)
 
-# ==================== 資料庫連線驗證 (強化除錯版) ====================
 # ==================== 資料庫連線驗證 (強化除錯版) ====================
 async def get_user_db_session(credentials: HTTPBasicCredentials = Depends(security)):
     db_url = f"mysql+aiomysql://{credentials.username}:{credentials.password}@localhost:3306/classroom_rental"
@@ -56,9 +60,15 @@ class RegisterPayload(BaseModel):
     password: str = Field(..., min_length=4)
     role: str
     department: str | None = Field(None, max_length=80)
+    
     def validate_payload(self):
-        if self.role not in ['student', 'teacher', 'admin']: raise ValueError("角色設定錯誤")
-        if not re.match(r'^([0-9]{8}|[A-Z][0-9]{5,7})$', self.user_id): raise ValueError("帳號格式不符合規範")
+        # 移除 'admin'，禁止透過公開 API 註冊系統管理員
+        if self.role not in ['student', 'teacher']: 
+            raise ValueError("角色設定錯誤：公開註冊僅限 student 或 teacher")
+        
+        # 匹配資料庫的 [a-z] (轉小寫比對)
+        if not re.match(r'^([0-9]{8}|[a-z][0-9]{5,7})$', self.user_id.lower()): 
+            raise ValueError("帳號格式不符合規範")
 
 class BookingPayload(BaseModel):
     classroom_id: str
@@ -228,17 +238,15 @@ async def get_pending_bookings(db: AsyncSession = Depends(get_user_db_session)):
 
 @app.post("/api/admin/reviews")
 async def submit_booking_review(payload: ReviewPayload, db: AsyncSession = Depends(get_user_db_session)):
-    """送出審核結果"""
     try:
         reviewer_id = (await db.execute(text("SELECT SUBSTRING_INDEX(USER(), '@', 1)"))).scalar()
         new_status_id = await get_status_id(db, payload.action)
         
-        # 直接執行 INSERT 與 UPDATE，因為 Session 已經自動開啟 Transaction 了
         await db.execute(text("INSERT INTO booking_reviews (booking_id, reviewer_id, status_id, comment) VALUES (:b_id, :r_id, :s_id, :comment)"),
                          {"b_id": payload.booking_id, "r_id": reviewer_id, "s_id": new_status_id, "comment": payload.comment})
         await db.execute(text("UPDATE bookings SET status_id = :s_id WHERE booking_id = :b_id"), {"s_id": new_status_id, "b_id": payload.booking_id})
         
-        await db.commit() # 手動提交
+        await db.commit() 
         return {"message": "審核完成！"}
     except Exception as e:
         await db.rollback()
@@ -246,9 +254,7 @@ async def submit_booking_review(payload: ReviewPayload, db: AsyncSession = Depen
 
 @app.patch("/api/admin/classrooms/{classroom_id}/status")
 async def update_classroom_status(classroom_id: str, payload: ClassroomStatusPayload, db: AsyncSession = Depends(get_user_db_session)):
-    """修改教室啟用狀態"""
     try:
-        # 同樣移除 async with db.begin()
         await db.execute(text("UPDATE classrooms SET is_active = :is_active WHERE classroom_id = :cid"),
                          {"is_active": payload.is_active, "cid": classroom_id})
         await db.commit()
@@ -277,5 +283,4 @@ async def import_courses_csv(payload: CSVImportPayload, db: AsyncSession = Depen
 import uvicorn
 
 if __name__ == "__main__":
-    # 啟動伺服器，對應此檔案(main)裡的 FastAPI 實例(app)
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
